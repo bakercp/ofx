@@ -220,7 +220,7 @@ function os()
 
 function clean_example_project_files()
 {
-  echoInfo "Cleaning project files ..."
+  echoFancy "Cleaning" "project files"
   find ${THIS_ADDON_PATH}/example* -maxdepth 1 \
   \( \
        -name "*.qbs" \
@@ -235,19 +235,24 @@ function clean_example_project_files()
 
 function clean_example_build_files()
 {
-  echoInfo "Cleaning QTCreatorBuild paths ..."
+  echoFancy "Cleaning" "QTCreatorBuild paths"
   find ${THIS_ADDON_PATH}/ -maxdepth 1 \( \
        -type d -a \
        -name "build-example*" \
     \)  -exec rm -rf {} \;
 
-  echoInfo "Cleaning project build files ..."
+    find ${THIS_ADDON_PATH}/ -maxdepth 1 \( \
+         -type d -a \
+         -name "_obj*" \
+      \)  -exec rm -rf {} \;
+
+  echoFancy "Cleaning" "project build files"
   find ${THIS_ADDON_PATH}/example* -maxdepth 1 \( \
        -type d -a \
        -name "obj" \
     \)  -exec rm -rf {} \;
 
-  echoInfo "Cleaning project app files ..."
+  echoFancy "Cleaning" "project app files"
   find ${THIS_ADDON_PATH}/example*/bin -maxdepth 1 \( \
        -name "*.app" \
     -o -name "*.app.dSYM" \
@@ -362,8 +367,6 @@ function install_example_data()
           else
             DST_PATH=${THIS_EXAMPLE_BIN_DATA_PATH}/${DST}
           fi
-
-
 
           if ! [ -e ${DST_PATH} ]; then
             if ! [ -e ${SRC_PATH} ]; then
