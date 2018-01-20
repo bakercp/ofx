@@ -303,6 +303,16 @@ function install_apothecary()
 
 function install_dependencies()
 {
+  # Determine any dependencies that should be installed.
+  # If no OS is specified, use the system OS.
+  TARGET=${1:-$(os)}
+
+  echoFancy "Installing" "System Dependencies"
+
+  if ! [ -f ${THIS_ADDON_PATH}/scripts/${TARGET}/install.sh ] ; then
+    /usr/bin/env bash ${THIS_ADDON_PATH}/scripts/${TARGET}/install.sh
+  fi
+
   echoFancy "Installing" "3rd Party Libraries"
 
   if ! [ -f ${OF_APOTHECARY_PATH}/apothecary/apothecary ] ; then
