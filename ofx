@@ -44,7 +44,7 @@ CON_BOLD="\033[1m"
 CON_RED="\033[31m"
 CON_YELLOW="\033[33m"
 CON_GREEN="\033[32m"
-CON_RED_UNDERLINE="\033[31;1;4m"
+CON_YELLOW_UNDERLINE="\033[33;1;4m"
 
 # Console printing functions (with color)
 echoError()   { echo -e "$CON_BOLD$CON_RED$1$CON_DEFAULT"; }
@@ -52,7 +52,7 @@ echoWarning() { echo -e "$CON_BOLD$CON_YELLOW$1$CON_DEFAULT"; }
 echoInfo()    { echo -e "$CON_BOLD$1$CON_DEFAULT"; }
 echoSuccess() { echo -e "$CON_BOLD$CON_GREEN$1$CON_DEFAULT"; }
 echoVerbose() { if [ $_VERBOSE == 1 ] ; then echoInfo "$1"; fi }
-echoFancy() { echo -e "${1} $CON_RED_UNDERLINE${2}$CON_DEFAULT ..."; }
+echoFancy() { echo -e "${1} $CON_YELLOW_UNDERLINE${2}$CON_DEFAULT ..."; }
 
 
 ################################################################################
