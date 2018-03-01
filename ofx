@@ -237,23 +237,25 @@ function clean_example_project_files()
   \) \
   -exec rm -rf {} \;
 
+
+
   # Determine any dependencies that should be installed.
   # If no OS is specified, use the system OS.
-  TARGET=${2:-$(os)}
-
-  TEMPLATE_MAKEFILE=${OF_SCRIPTS_PATH}/templates/${TARGET}/Makefile
-  TEMPLATE_CONFIG_MAKE=${OF_SCRIPTS_PATH}/templates/${TARGET}/config.make
-
-  for example in ${THIS_ADDON_PATH}/example*; do
-    THIS_MAKEFILE=${example}/Makefile
-    THIS_CONFIG_MAKE=${example}/config.make
-    if [ -f ${THIS_MAKEFILE} ] && [ "$(is_same_file "${TEMPLATE_MAKEFILE}" "${THIS_MAKEFILE}")" == "1" ]; then
-      rm "${THIS_MAKEFILE}"
-    fi
-    if [ -f ${THIS_CONFIG_MAKE} ] && [ "$(is_same_file "${TEMPLATE_CONFIG_MAKE}" "${THIS_CONFIG_MAKE}")" == "1" ]; then
-      rm "${THIS_CONFIG_MAKE}"
-    fi
-  done
+  # TARGET=${2:-$(os)}
+  #
+  # TEMPLATE_MAKEFILE=${OF_SCRIPTS_PATH}/templates/${TARGET}/Makefile
+  # TEMPLATE_CONFIG_MAKE=${OF_SCRIPTS_PATH}/templates/${TARGET}/config.make
+  #
+  # for example in ${THIS_ADDON_PATH}/example*; do
+  #   THIS_MAKEFILE=${example}/Makefile
+  #   THIS_CONFIG_MAKE=${example}/config.make
+  #   if [ -f ${THIS_MAKEFILE} ] && [ "$(is_same_file "${TEMPLATE_MAKEFILE}" "${THIS_MAKEFILE}")" == "1" ]; then
+  #     rm "${THIS_MAKEFILE}"
+  #   fi
+  #   if [ -f ${THIS_CONFIG_MAKE} ] && [ "$(is_same_file "${TEMPLATE_CONFIG_MAKE}" "${THIS_CONFIG_MAKE}")" == "1" ]; then
+  #     rm "${THIS_CONFIG_MAKE}"
+  #   fi
+  # done
 
 }
 
@@ -319,7 +321,7 @@ function install_apothecary()
   fi
 
   echoInfo "Done installing apothecary."
-  exit 0;
+  return 0;
 }
 
 
