@@ -471,6 +471,7 @@ function bootstrap()
   echo -e "\tthe introduction of the rest of the program from an input"
   echo -e "\tdevice.\"\n"
 
+  install_apothecary
   install_dependencies
   install_shared_data
   install_example_data
