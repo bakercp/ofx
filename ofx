@@ -312,6 +312,41 @@ function install_apothecary()
   # If no OS is specified, use the system OS.
   TARGET=${1:-$(os)}
 
+  if [ "${TARGET}" == "osx" ] ; then
+    if ! [ -x "$(command -v brew)" ]; then
+      echoError "Brew is not installed. Go here and install it: https://brew.sh/." >&2
+      exit 1
+    else
+      echoInfo "Brew is istalled, continuing."
+    fi
+
+    if xcrun -sdk iphoneos --show-sdk-version ; then
+      echoInfo "macOS iOS SDK Found"
+    else
+      echoError "The SDK path is not set correctly ..."
+
+      if ! [ -e "/Applications/Xcode.app/Contents/Developer" ]; then
+        echoError "Xcode is NOT installed."
+        echoError "Install it from the App Store."
+      else
+        echoError "Xcode is installed, so try running:"
+        echo ""
+        echoWarning "    sudo xcode-select -s /Applications/Xcode.app/Contents/Developer/"
+        echo ""
+        echoWarning "    Or ..."
+        echo ""
+        echoWarning "    1) Open Xcode Preferences ..."
+        echoWarning "    2) Got to the Locations tab ..."
+        echoWarning "    3) Make sure the Command Line Tools are set to the latest version ..."
+        echo ""
+      fi
+
+      echoError "Then run this command again."
+
+      exit 1
+    fi
+  fi
+
   # Install any apothecary dependencies.
   if [ -f ${OF_APOTHECARY_PATH}/scripts/${TARGET}/install.sh ] ; then
     echoInfo "Installing apothecary dependencies ..."
