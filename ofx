@@ -47,12 +47,12 @@ CON_GREEN="\033[32m"
 CON_YELLOW_UNDERLINE="\033[33;1;4m"
 
 # Console printing functions (with color)
-echoError()   { echo -e "$CON_BOLD$CON_RED$1$CON_DEFAULT"; }
-echoWarning() { echo -e "$CON_BOLD$CON_YELLOW$1$CON_DEFAULT"; }
-echoInfo()    { echo -e "$CON_BOLD$1$CON_DEFAULT"; }
-echoSuccess() { echo -e "$CON_BOLD$CON_GREEN$1$CON_DEFAULT"; }
+echoError()   { echo -e "❌  $CON_BOLD$CON_RED$1$CON_DEFAULT"; }
+echoWarning() { echo -e "⚠️  $CON_BOLD$CON_YELLOW$1$CON_DEFAULT"; }
+echoInfo()    { echo -e "ℹ️  $CON_BOLD$1$CON_DEFAULT"; }
+echoSuccess() { echo -e "✅  $CON_BOLD$CON_GREEN$1$CON_DEFAULT"; }
 echoVerbose() { if [ $_VERBOSE == 1 ] ; then echoInfo "$1"; fi }
-echoFancy() { echo -e "${1} $CON_YELLOW_UNDERLINE${2}$CON_DEFAULT ..."; }
+echoFancy() { echo -e "💪  ${1} $CON_YELLOW_UNDERLINE${2}$CON_DEFAULT ..."; }
 
 
 ################################################################################
@@ -317,7 +317,7 @@ function install_apothecary()
       echoError "Brew is not installed. Go here and install it: https://brew.sh/." >&2
       exit 1
     else
-      echoInfo "Brew is istalled, continuing."
+      echoInfo "Brew is installed, continuing."
     fi
 
     if xcrun -sdk iphoneos --show-sdk-version ; then
@@ -327,7 +327,7 @@ function install_apothecary()
 
       if ! [ -e "/Applications/Xcode.app/Contents/Developer" ]; then
         echoError "Xcode is NOT installed."
-        echoError "Install it from the App Store."
+        echoError "Install it from the App Store, then open the application and agree to the license."
       else
         echoError "Xcode is installed, so try running:"
         echo ""
@@ -349,13 +349,13 @@ function install_apothecary()
 
   # Install any apothecary dependencies.
   if [ -f ${OF_APOTHECARY_PATH}/scripts/${TARGET}/install.sh ] ; then
-    echoInfo "Installing apothecary dependencies ..."
+    echoFancy "Installing" "Apothecary Dependencies"
     /usr/bin/env bash ${OF_APOTHECARY_PATH}/scripts/${TARGET}/install.sh
   else
     echoInfo "No additional apothecary dependencies to install."
   fi
 
-  echoInfo "Done installing apothecary."
+  echoSuccess "Done installing apothecary."
   return 0;
 }
 
@@ -382,9 +382,9 @@ function install_dependencies()
   # Determine any dependencies that should be installed.
   # If no OS is specified, use the system OS.
   TARGET=${1:-$(os)}
-  echoInfo "Building ${THIS_ADDON_NAME} libraries for ${TARGET} ..."
+  echoFancy "Building " "${THIS_ADDON_NAME} libraries for ${TARGET}"
   /usr/bin/env bash ${OF_APOTHECARY_PATH}/apothecary/apothecary -j4 -t "${TARGET}" -d "${THIS_ADDON_PATH}/libs" update "${THIS_ADDON_NAME}"
-  echoInfo "Build of ${THIS_ADDON_NAME} for ${TARGET} complete."
+  echoSuccess "Build of ${THIS_ADDON_NAME} for ${TARGET} complete."
   return 0;
 }
 
