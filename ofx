@@ -368,7 +368,7 @@ function install_dependencies()
 
   echoFancy "Installing" "System Dependencies"
 
-  if ! [ -f ${THIS_ADDON_PATH}/scripts/${TARGET}/install.sh ] ; then
+  if [ -f ${THIS_ADDON_PATH}/scripts/${TARGET}/install.sh ] ; then
     /usr/bin/env bash ${THIS_ADDON_PATH}/scripts/${TARGET}/install.sh
   fi
 
