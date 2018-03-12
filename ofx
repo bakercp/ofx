@@ -290,6 +290,21 @@ function clean_example_build_files()
   return 0;
 }
 
+function clean_apothecary()
+{
+  if ! [ -f ${OF_APOTHECARY_PATH}/apothecary/apothecary ] ; then
+    echoError "Apothecary not installed."
+    exit 1;
+  fi
+
+  # Determine any dependencies that should be installed.
+  # If no OS is specified, use the system OS.
+  TARGET=${1:-$(os)}
+  echoFancy "Building " "${THIS_ADDON_NAME} libraries for ${TARGET}"
+  /usr/bin/env bash ${OF_APOTHECARY_PATH}/apothecary/apothecary -j4 -t "${TARGET}" -d "${THIS_ADDON_PATH}/libs" clean "${THIS_ADDON_NAME}"
+  echoSuccess "Cleaning of ${THIS_ADDON_NAME} for ${TARGET} complete."
+}
+
 
 function install_apothecary()
 {
@@ -471,9 +486,11 @@ function clean()
 {
   case "$1" in
     all)
+      clean apothecary "$@"
       clean projects "$@"
       clean build "$@"
       ;;
+    apothecary) shift 1; clean_apothecary "$@" ;;
     projects) shift 1; clean_example_project_files "$@" ;;
     build) shift 1; clean_example_build_files "$@" ;;
     *)
