@@ -405,7 +405,9 @@ function install_example_data()
 {
   echoFancy "Installing" "example data"
 
-  for data_file in ${THIS_ADDON_PATH}/example*/bin/data/data.txt
+  DATA_FILES=$(find example_* -name data.txt)
+
+  for data_file in ${DATA_FILES}
   do
     # For the example data path.
     THIS_EXAMPLE_BIN_DATA_PATH=$(dirname "${data_file}")
