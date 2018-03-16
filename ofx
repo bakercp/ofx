@@ -425,10 +425,8 @@ function install_shared_data()
 function install_example_data()
 {
   echoFancy "Installing" "example data"
-
-  if ls example_*/data.txt 1> /dev/null 2>&1; then
-    DATA_FILES=$(find example_* -name data.txt)
-
+  if ls ${THIS_ADDON_PATH}/example*/bin/data/data.txt 1> /dev/null 2>&1; then
+    DATA_FILES=$(find ${THIS_ADDON_PATH}/example*/bin/data -name data.txt)
     for data_file in ${DATA_FILES}
     do
       # For the example data path.
