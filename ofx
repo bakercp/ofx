@@ -20,9 +20,13 @@ HELP="usage: ofx [options] <command> [command parameters]
 about:
  This is ofx, the openFrameworks addons multi-tool.
 commands:
-  clean
+  bootstrap clean
 options:
-  -h  print this usage guide
+  -j The number of jobs (cores) used when compiling (default: 1).
+  -p The Project Generator Path.
+  -o The openFrameworks Root Path.
+  -h or -? Print this usage guide.
+  -v Verbose Mode.
 examples:
   # update core dependencies
   apothecary update depends
@@ -87,7 +91,7 @@ shift 1
 if ! [ $A_CMD = "bootstrap" ]; then
   # check for arguments
   if [ $# -lt 1 ] ; then
-    echoError " Missing command target. See help: 'apothecary -h'."
+    echoError " Missing command target. See help: 'ofx -h'."
     exit 1
   fi
 fi
@@ -169,6 +173,8 @@ if [ $_VERBOSE == 1 ]; then
   echo "                    ADDON_CLONE_USERNAME: ${ADDON_CLONE_USERNAME}"
   echo ""
   echo "                                    JOBS: ${JOBS}"
+  echo "                                _VERBOSE: ${_VERBOSE}"
+  echo ""
   echo "================================================================================"
 fi
 
