@@ -60,19 +60,19 @@ echoSuccess() { echo -e "✅  $CON_BOLD$CON_GREEN$1$CON_DEFAULT"; }
 echoVerbose() { if [ $_VERBOSE == 1 ] ; then echoInfo "$1"; fi }
 echoFancy() { echo -e "💪  ${1} $CON_YELLOW_UNDERLINE${2}$CON_DEFAULT ..."; }
 
+# Tutorial: https://wiki.bash-hackers.org/howto/getopts_tutorial
 
-################################################################################
-# Parse Command Line
-# Reference: http://www.mkssoftware.com/docs/man1/getopts.1.asp
-################################################################################
+# A POSIX variable
+OPTIND=1 # Reset in case getopts has been used previously in the shell.
 
-while getopts op:j:hv opt ; do
+# When a colon is after an character, that character expects an argument. 
+while getopts o:p:j:hv opt ; do
   case "$opt" in
-    p) PROJECT_GENERATOR_PATH=$OPTARG ; ;;
+    j) JOBS=$OPTARG ; ;;
+    p) OF_PROJECT_GENERATOR_PATH=$OPTARG ; ;;
     o) OF_ROOT=$OPTARG ; ;;
-    h) echoInfo "$HELP" ; exit 1 ;;
+    h|\?) echoInfo "$HELP" ; exit 1 ;;
     v) _VERBOSE=1 ;;
-    [?]) echoInfo "$HELP" ; exit 1 ;;
   esac
 done
 shift "$((OPTIND-1))"
