@@ -11,7 +11,7 @@ set -o errexit   # set -e : exit the script if any statement returns a non-true 
 DEFAULT_CLONE_DEPTH=1
 # export MAKEFLAGS="-s"
 
-PARALLEL_MAKE=4
+JOBS=1
 
 # Is verbose?
 _VERBOSE=0
@@ -64,7 +64,6 @@ echoFancy() { echo -e "💪  ${1} $CON_YELLOW_UNDERLINE${2}$CON_DEFAULT ..."; }
 
 while getopts op:j:hv opt ; do
   case "$opt" in
-    j) PARALLEL_MAKE=$OPTARG ; ;;
     p) PROJECT_GENERATOR_PATH=$OPTARG ; ;;
     o) OF_ROOT=$OPTARG ; ;;
     h) echoInfo "$HELP" ; exit 1 ;;
@@ -169,6 +168,7 @@ if [ $_VERBOSE == 1 ]; then
   echo "                      ADDON_CLONE_BRANCH: ${ADDON_CLONE_BRANCH}"
   echo "                    ADDON_CLONE_USERNAME: ${ADDON_CLONE_USERNAME}"
   echo ""
+  echo "                                    JOBS: ${JOBS}"
   echo "================================================================================"
 fi
 
@@ -304,7 +304,7 @@ function clean_apothecary()
   # If no OS is specified, use the system OS.
   TARGET=${1:-$(os)}
   echoFancy "Building " "${THIS_ADDON_NAME} libraries for ${TARGET}"
-  /usr/bin/env bash ${OF_APOTHECARY_PATH}/apothecary/apothecary -j${PARALLEL_MAKE} -t "${TARGET}" -d "${THIS_ADDON_PATH}/libs" clean "${THIS_ADDON_NAME}"
+  /usr/bin/env bash ${OF_APOTHECARY_PATH}/apothecary/apothecary -j ${JOBS} -t "${TARGET}" -d "${THIS_ADDON_PATH}/libs" clean "${THIS_ADDON_NAME}"
   echoSuccess "Cleaning of ${THIS_ADDON_NAME} for ${TARGET} complete."
 }
 
