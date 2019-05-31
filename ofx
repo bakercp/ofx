@@ -120,6 +120,12 @@ else
   THIS_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 fi
 
+# Account for local addons.
+ADDON_PARENT_DIRECTORY=$(basename "$(cd "$( dirname "${BASH_SOURCE[0]}" )/../../.." && pwd)")
+if [ "${ADDON_PARENT_DIRECTORY}" == "local_addons" ]; then
+  THIS_ADDON_PATH=$(cd "$( dirname "${BASH_SOURCE[0]}" )/../.." && pwd)
+fi
+
 # OF paths.
 OF_ADDONS_PATH=${OF_ADDONS_PATH:-${OF_ROOT}/addons}
 OF_SCRIPTS_PATH=${OF_SCRIPTS_PATH:-${OF_ROOT}/scripts}
