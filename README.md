@@ -2,35 +2,47 @@
 
 ## Description
 
-A tool for working with openFrameworks addons.
+A multi-tool for working with openFrameworks addons.
 
 ## Features
 
-TODO.
+- Installation
+  - Build 3rd party libraries via apothecary.
+  - Install package-managed dependencies.
+  - Install shared data.
+  - Install example data.
 
 ## Getting Started
 
-
-
 ### Commands
 
-`ofx bootstrap`
+### Help
 
+To get help:
 
+`./ofx -h`
 
-To just install dependencies (build libs)
+### To Install
 
-`./ofx install dependencies`
+To istall Apothecary and its dependencies:
 
-`./ofx install dependencies`
+`./ofx install apothecary`
 
-`./ofx install dependencies`
+Some addons (e.g. [ofxDlib](https://github.com/bakercp/ofxDlib/tree/master/shared/data)) have scripts for downloading shared data. These scripts are bash scripts and reside in the `ADDON/shared/data` folder. To run all of the shared data scripts:
 
-  install_apothecary
-  install_dependencies
-  # install_shared_data
-  # install_example_data
+`./ofx install shared_data`
 
+Some addon examples (e.g. [ofxDlib](https://github.com/bakercp/ofxDlib/blob/master/example_bridge_of_to_dlib/bin/data/data.txt)) have lists of required data in a `data.txt` file. To download and copy or link that data, run:
+
+`./ofx install example_data`
+
+To do all of the above:
+
+`./ofx bootstrap`
+
+### To Clean
+
+TODO.
 
 ## Troubleshooting
 
@@ -46,9 +58,7 @@ TODO.
 
 ## Compatibility
 
-**Currently NOT Compatible with < 0.10.0, thus we have no stable branch as noted below.**
-
-~~The `stable` branch of this repository is meant to be compatible with the openFrameworks [stable branch](https://github.com/openframeworks/openFrameworks/tree/stable), which corresponds to the latest official openFrameworks release.~~
+The `stable` branch of this repository is meant to be compatible with the openFrameworks [stable branch](https://github.com/openframeworks/openFrameworks/tree/stable), which corresponds to the latest official openFrameworks release.
 
 The `master` branch of this repository is meant to be compatible with the openFrameworks [master branch](https://github.com/openframeworks/openFrameworks/tree/master).
 
@@ -60,7 +70,7 @@ This project uses Semantic Versioning, although strict adherence will only come 
 
 ## Licensing
 
-See `LICENSE.md`.
+See [LICENSE.md](LICENSE.md).
 
 ## Contributing
 
