@@ -280,17 +280,19 @@ fi
 function clean_example_project_files()
 {
   echoFancy "Cleaning" "project files"
-  find ${THIS_ADDON_PATH}/example* -maxdepth 1 \
-  \( \
-       -name "*.qbs" \
-    -o -name "*.xcodeproj" \
-    -o -name "*.xcconfig" \
-    -o -name "*.plist" \
-    -o -name "*.qbs.user" \
-  \) \
-  -exec rm -rf {} \;
 
-
+  find ${THIS_ADDON_PATH} -name addons.make -exec dirname {} \; | while read -r example; do
+    find ${example} -maxdepth 1 \
+    \( \
+         -name "*.qbs" \
+      -o -name "*.xcodeproj" \
+      -o -name "*.xcconfig" \
+      -o -name "*.plist" \
+      -o -name "*.qbs.user" \
+    \) \
+    -exec rm -rf {} \;
+    echoSuccess "Cleaned: ${example#"${THIS_ADDON_PATH}/"}"
+  done
 
   # TEMPLATE_MAKEFILE=${OF_SCRIPTS_PATH}/templates/${TARGET_PLATFORM}/Makefile
   # TEMPLATE_CONFIG_MAKE=${OF_SCRIPTS_PATH}/templates/${TARGET_PLATFORM}/config.make
@@ -309,39 +311,39 @@ function clean_example_project_files()
 }
 
 
-function list_examples()
-{
-  :
-}
-
-
 function clean_example_build_files()
 {
   echoFancy "Cleaning" "QTCreatorBuild paths"
-  find ${THIS_ADDON_PATH}/ -maxdepth 1 \( \
-       -type d -a \
-       -name "build-example*" \
-    \)  -exec rm -rf {} \;
 
-  find ${THIS_ADDON_PATH}/ -maxdepth 1 \( \
+  find ${THIS_ADDON_PATH} -name addons.make -exec dirname {} \; | while read -r example; do
+    find ${example} -maxdepth 1 \( \
         -type d -a \
-        -name "_obj*" \
-    \)  -exec rm -rf {} \;
+        -name "build-example*" \
+      \)  -exec rm -rf {} \;
 
-  echoFancy "Cleaning" "project build files"
-  find ${THIS_ADDON_PATH}/example* -maxdepth 1 \( \
-       -type d -a \
-       -name "obj" \
-    \)  -exec rm -rf {} \;
+    find ${example} -maxdepth 1 \( \
+          -type d -a \
+          -name "_obj*" \
+      \)  -exec rm -rf {} \;
 
-  echoFancy "Cleaning" "project app files"
-  find ${THIS_ADDON_PATH}/example*/bin -maxdepth 1 \( \
-       -name "*.app" \
-    -o -name "*.app.dSYM" \
-    -o -name "PkgInfo" \
-    -o -name ".tmp" \
-    -o -name "*.plist" \
-    \)  -exec rm -rf {} \;
+    echoFancy "Cleaning" "project build files"
+    find ${example} -maxdepth 1 \( \
+        -type d -a \
+        -name "obj" \
+      \)  -exec rm -rf {} \;
+
+    if [ -d ${example}/bin ] ; then 
+      echoFancy "Cleaning" "project app files"
+      find ${example}/bin -maxdepth 1 \( \
+          -name "*.app" \
+        -o -name "*.app.dSYM" \
+        -o -name "PkgInfo" \
+        -o -name ".tmp" \
+        -o -name "*.plist" \
+        \)  -exec rm -rf {} \;
+    fi
+    echoSuccess "Cleaned: ${example#"${THIS_ADDON_PATH}/"}"
+  done
 
   return 0;
 }
@@ -464,81 +466,88 @@ function install_shared_data()
 function install_example_data()
 {
   echoFancy "Installing" "example data"
-  if ls ${THIS_ADDON_PATH}/example*/bin/data/data.txt 1> /dev/null 2>&1; then
-    DATA_FILES=$(find ${THIS_ADDON_PATH}/example*/bin/data -name data.txt)
-    for data_file in ${DATA_FILES}
-    do
-      # For the example data path.
-      THIS_EXAMPLE_BIN_DATA_PATH=$(dirname "${data_file}")
 
-      # The || [ -n "$line" ]; is to help when the last line isn't a new line char.
-      while read line || [ -n "$line" ];
+  find ${THIS_ADDON_PATH} -name addons.make -exec dirname {} \; | while read -r example; do
+    local did_install=false
+    if [ -d ${example}/bin/data ] ; then
+
+      DATA_FILES=$(find ${example}/bin/data -name data.txt)
+      for data_file in ${DATA_FILES}
       do
-        # Make sure the data doesn't start with a comment hash #
-        # Make sure that it isn't am empty line.
-        if [ "${line:0:1}" != "#"  ] && [ -n "${line// }" ]; then
-          IFS=' ' read -r -a tokens <<< "${line}" # Parse the tokens.
-          SRC=${tokens[0]} # Get the source location.
-          DST=${tokens[1]:-""} # Get the destination location, or nothing if missing.
+        did_install=true
+        # For the example data path.
+        THIS_EXAMPLE_BIN_DATA_PATH=$(dirname "${data_file}")
 
-          if ! [[ ${SRC} == http* ]]; then
-            if [[ "$SRC" = /* ]]; then
-              SRC_PATH=${SRC}
-            else
-              SRC_PATH=${THIS_ADDON_SHARED_DATA_PATH}/${SRC}
-            fi
+        # The || [ -n "$line" ]; is to help when the last line isn't a new line char.
+        while read line || [ -n "$line" ];
+        do
+          # Make sure the data doesn't start with a comment hash #
+          # Make sure that it isn't am empty line.
+          if [ "${line:0:1}" != "#"  ] && [ -n "${line// }" ]; then
+            IFS=' ' read -r -a tokens <<< "${line}" # Parse the tokens.
+            SRC=${tokens[0]} # Get the source location.
+            DST=${tokens[1]:-""} # Get the destination location, or nothing if missing.
 
-            if [[ -z ${DST} ]]; then
+            if ! [[ ${SRC} == http* ]]; then
               if [[ "$SRC" = /* ]]; then
-                DST_PATH=${THIS_EXAMPLE_BIN_DATA_PATH}/$(basename "${SRC}")
+                SRC_PATH=${SRC}
               else
-                DST_PATH=${THIS_EXAMPLE_BIN_DATA_PATH}/${SRC}
+                SRC_PATH=${THIS_ADDON_SHARED_DATA_PATH}/${SRC}
               fi
+
+              if [[ -z ${DST} ]]; then
+                if [[ "$SRC" = /* ]]; then
+                  DST_PATH=${THIS_EXAMPLE_BIN_DATA_PATH}/$(basename "${SRC}")
+                else
+                  DST_PATH=${THIS_EXAMPLE_BIN_DATA_PATH}/${SRC}
+                fi
+              else
+                DST_PATH=${THIS_EXAMPLE_BIN_DATA_PATH}/${DST}
+              fi
+
+              if ! [ -e ${DST_PATH} ]; then
+                if ! [ -e ${SRC_PATH} ]; then
+                  echo "❌ ${SRC_PATH} does not exist. Did you install the shared data?"
+                  continue
+                fi
+
+                mkdir -p "$(dirname "${DST_PATH}")"
+                rsync -Pvqar ${SRC_PATH} ${DST_PATH}
+              fi
+
+              echo "✅ ${SRC_PATH} 👉 ${DST_PATH}"
             else
-              DST_PATH=${THIS_EXAMPLE_BIN_DATA_PATH}/${DST}
-            fi
-
-            if ! [ -e ${DST_PATH} ]; then
-              if ! [ -e ${SRC_PATH} ]; then
-                echo "❌ ${SRC_PATH} does not exist. Did you install the shared data?"
-                continue
+              if [[ -z ${DST} ]]; then
+                DST=$(basename ${SRC})
               fi
-
-              mkdir -p "$(dirname "${DST_PATH}")"
-              rsync -Pvqar ${SRC_PATH} ${DST_PATH}
+              DST_PATH=${THIS_EXAMPLE_BIN_DATA_PATH}/${DST}
+              if ! [ -e ${DST_PATH} ]; then
+                curl --progress-bar --create-dirs -o ${DST_PATH} -L ${SRC}
+              fi
+              echo "✅ ${SRC} 👉 ${DST_PATH}"
             fi
-
-            echo "✅ ${SRC_PATH} 👉 ${DST_PATH}"
-          else
-            if [[ -z ${DST} ]]; then
-              DST=$(basename ${SRC})
-            fi
-            DST_PATH=${THIS_EXAMPLE_BIN_DATA_PATH}/${DST}
-            if ! [ -e ${DST_PATH} ]; then
-              curl --progress-bar --create-dirs -o ${DST_PATH} -L ${SRC}
-            fi
-            echo "✅ ${SRC} 👉 ${DST_PATH}"
           fi
-        fi
-      done < ${data_file}
-    done
-  fi
+        done < ${data_file}
+      done
+    fi
+
+    if [ ${did_install} == "true" ]; then
+      echoSuccess "Installed data for: ${example#"${THIS_ADDON_PATH}/"}"
+    else 
+      echoInfo "No shared data for: ${example#"${THIS_ADDON_PATH}/"}"
+    fi 
+  done
 
   return 0;
 }
 
 function list_examples()
 {
-  echo "Listing examples."
+  echoFancy "Listing" "examples"
 
-  # include directories with addons.make or src && bin
-
-  find ${THIS_ADDON_PATH}/example* -maxdepth 1 \( \
-        -type d -a \
-        -not -name bin -a \
-        -not -name src -a \
-        -not -name *.xcodeproj \
-      \) 
+  find ${THIS_ADDON_PATH} -name addons.make -exec dirname {} \; | while read -r example; do
+    echo $example
+  done
 }
 
 function list()
