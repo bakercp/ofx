@@ -10,7 +10,27 @@ TODO.
 
 ## Getting Started
 
-TODO.
+
+
+### Commands
+
+`ofx bootstrap`
+
+
+
+To just install dependencies (build libs)
+
+`./ofx install dependencies`
+
+`./ofx install dependencies`
+
+`./ofx install dependencies`
+
+  install_apothecary
+  install_dependencies
+  # install_shared_data
+  # install_example_data
+
 
 ## Troubleshooting
 
