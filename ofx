@@ -661,7 +661,7 @@ function list()
     tests) shift 1; list_tests "$@" ;;
     *)
       echoError " Unknown list target: \"$1\""
-      echoError " valid: examples"
+      echoError " valid: examples, tests"
       exit 1 ;;
   esac
   return 0;
@@ -696,7 +696,7 @@ function clean()
       ;;
     *)
       echoError " Unknown clean target: \"$1\""
-      echoError " valid: all, apothecary, projects, build"
+      echoError " valid: all, apothecary, example_project_files, test_project_files, example_build_files, test_build_files, projects, build"
       exit 1 ;;
   esac
   return 0;
