@@ -116,7 +116,7 @@ function is_same_file()
 # A POSIX variable
 OPTIND=1 # Reset in case getopts has been used previously in the shell.
 
-# When a colon is after an character, that character expects an argument. 
+# When a colon is after an character, that character expects an argument.
 while getopts j:p:t:o:hv opt ; do
   case "$opt" in
     j) JOBS=$OPTARG ; ;;
@@ -140,7 +140,7 @@ fi
 shift 1
 
 # Some commands don't require targets.
-if ! [ $A_CMD = "bootstrap" ]; then
+if ! [ "$A_CMD" == "bootstrap" ]; then
   # check for arguments
   if [ $# -lt 1 ] ; then
     echoError " Missing command target. See help: 'ofx -h'."
@@ -167,19 +167,19 @@ _APPVEYOR=${APPVEYOR:-}
 _TRAVIS=${TRAVIS:-}
 
 # This script should live in the scripts directory of the addon.
-if [ ! -z ${_CI} ] && [ "$_CI" = true ]; then
+if [ ! -z ${_CI} ] && [ "$_CI" == "true" ]; then
   OF_ROOT=${OF_ROOT:-~/openFrameworks}
-  if [ ! -z ${_APPVEYOR} ] && [ "$_APPVEYOR" = true ]; then
+  if [ ! -z ${_APPVEYOR} ] && [ "$_APPVEYOR" == "true" ]; then
     THIS_ADDON_NAME=${APPVEYOR_PROJECT_SLUG#*/}
     THIS_USERNAME=${APPVEYOR_PROJECT_SLUG%/*}
     THIS_BRANCH=${APPVEYOR_REPO_BRANCH}
-  elif [ ! -z ${_TRAVIS} ] && [ "$_TRAVIS" = true ]; then
+  elif [ ! -z ${_TRAVIS} ] && [ "$_TRAVIS" == "true" ]; then
     THIS_ADDON_NAME=${TRAVIS_REPO_SLUG#*/}
     THIS_USERNAME=${TRAVIS_REPO_SLUG%/*}
     THIS_BRANCH=${TRAVIS_BRANCH}
   fi
 else
-  if [ "$IS_LOCAL_ADDON" = true ]; then
+  if [ "$IS_LOCAL_ADDON" == "true" ]; then
     OF_ROOT=${OF_ROOT:-$(cd "$( dirname "${BASH_SOURCE[0]}" )/../../../../../../../" && pwd)}
   else
     OF_ROOT=${OF_ROOT:-$(cd "$( dirname "${BASH_SOURCE[0]}" )/../../../../" && pwd)}
@@ -224,7 +224,7 @@ else
   OF_PROJECT_GENERATOR_PATH=${OF_PROJECT_GENERATOR_PATH:-$OF_ROOT/projectGenerator-${HOST_PLATFORM}}
 fi
 
-if [ -z ${OF_PROJECT_GENERATOR_BIN_PATH+x} ]; then 
+if [ -z ${OF_PROJECT_GENERATOR_BIN_PATH+x} ]; then
     if [ "${HOST_PLATFORM}" == "osx" ]; then
       OF_PROJECT_GENERATOR_BIN_PATH=${OF_PROJECT_GENERATOR_PATH}/projectGenerator.app/Contents/Resources/app/app
     else
@@ -235,7 +235,7 @@ fi
 OF_PROJECT_GENERATOR_BIN=projectGenerator
 OF_PROJECT_GENERATOR_COMMAND=${OF_PROJECT_GENERATOR_BIN_PATH}/./${OF_PROJECT_GENERATOR_BIN}
 
-if [ -f ${OF_PROJECT_GENERATOR_COMMAND} ]; then 
+if [ -f ${OF_PROJECT_GENERATOR_COMMAND} ]; then
   OF_PROJECT_GENERATOR_AVAILABLE=true
 else
   OF_PROJECT_GENERATOR_AVAILABLE=false
@@ -291,17 +291,17 @@ fi
 # Arguments
 # $1 = path to a project.
 # $1 = if "force", force clean.
-function clean_project_files() 
+function clean_project_files()
 {
   PROJECT_PATH=$1
 
-  if [ $# -gt 1 ]; then 
+  if [ $# -gt 1 ]; then
     FORCE_CLEAN=true
-  else 
+  else
     FORCE_CLEAN=false
   fi
 
-  if [ "${FORCE_CLEAN}" == "true" ]; then 
+  if [ "${FORCE_CLEAN}" == "true" ]; then
     # Here we force clean the makefiles and config.make.
     find ${PROJECT_PATH} -maxdepth 1 \
     \( \
@@ -314,7 +314,7 @@ function clean_project_files()
       -o -name "Makefile" \
     \) \
     -exec rm -rf {} \;
-  else 
+  else
     find ${PROJECT_PATH} -maxdepth 1 \
     \( \
           -name "*.qbs" \
@@ -358,9 +358,9 @@ function clean_project_build_files()
 {
   PROJECT_PATH=$1
 
-  if [ $# -gt 1 ]; then 
+  if [ $# -gt 1 ]; then
     FORCE_CLEAN=true
-  else 
+  else
     FORCE_CLEAN=false
   fi
 
@@ -382,7 +382,7 @@ function clean_project_build_files()
       -name "obj" \
     \)  -exec rm -rf {} \;
 
-  if [ -d ${PROJECT_PATH}/bin ] ; then 
+  if [ -d ${PROJECT_PATH}/bin ] ; then
     echoFancy "Cleaning" "project app files"
     find ${PROJECT_PATH}/bin -maxdepth 1 \( \
         -name "*.app" \
@@ -540,7 +540,7 @@ function install_data_for_project()
 {
     PROJECT_PATH=$1
     local did_install=false
-    if [ -d ${project}/bin/data ] ; then
+    if [ -d ${PROJECT_PATH}/bin/data ] ; then
 
       DATA_FILES=$(find ${PROJECT_PATH}/bin/data -name data.txt)
       for data_file in ${DATA_FILES}
@@ -560,14 +560,14 @@ function install_data_for_project()
             DST=${tokens[1]:-""} # Get the destination location, or nothing if missing.
 
             if ! [[ ${SRC} == http* ]]; then
-              if [[ "$SRC" = /* ]]; then
+              if [[ ${SRC} == /* ]]; then
                 SRC_PATH=${SRC}
               else
                 SRC_PATH=${THIS_ADDON_SHARED_DATA_PATH}/${SRC}
               fi
 
               if [[ -z ${DST} ]]; then
-                if [[ "$SRC" = /* ]]; then
+                if [[ ${SRC} == /* ]]; then
                   DST_PATH=${THIS_PROJECT_BIN_DATA_PATH}/$(basename "${SRC}")
                 else
                   DST_PATH=${THIS_PROJECT_BIN_DATA_PATH}/${SRC}
@@ -604,9 +604,9 @@ function install_data_for_project()
 
     if [ ${did_install} == "true" ]; then
       echoSuccess "Installed data for: ${PROJECT_PATH#"${THIS_ADDON_PATH}/"}"
-    else 
+    else
       echoInfo "No shared data for: ${PROJECT_PATH#"${THIS_ADDON_PATH}/"}"
-    fi 
+    fi
 }
 
 
@@ -684,7 +684,7 @@ function clean()
     test_project_files) shift 1; clean_test_project_files "$@" ;;
     example_build_files) shift 1; clean_example_build_files "$@" ;;
     test_build_files) shift 1; clean_example_build_files "$@" ;;
-    projects) 
+    projects)
       shift 1
       clean_example_project_files "$@"
       clean_test_project_files "$@"
@@ -735,10 +735,6 @@ function generate_project()
 
     PROJECT_PATH_RELATIVE_OF_ROOT=$(realpath --relative-to="${PROJECT_PATH}/.." "${OF_ROOT}")
 
-    echo ${PROJECT_PATH}
-    echo ${OF_ROOT}
-    echo ${PROJECT_PATH_RELATIVE_OF_ROOT}
-
     if ! [ -f ${PROJECT_MAKEFILE} ]; then
       cp ${TEMPLATE_MAKEFILE} ${PROJECT_PATH}
       sed -i'.bak' -e 's|\.\./\.\.|'${PROJECT_PATH_RELATIVE_OF_ROOT}'|g' ${PROJECT_MAKEFILE}
@@ -787,9 +783,14 @@ function generate()
   case "$1" in
     examples) shift 1; generate_examples "$@" ;;
     tests) shift 1; generate_tests "$@" ;;
+    all)
+      shift 1
+      generate_examples "$@"
+      generate_tests "$@"
+      ;;
     *)
       echoError " Unknown generate target: \"$1\""
-      echoError " valid: examples tests"
+      echoError " valid: all, examples, tests"
       exit 1;;
   esac
   return 0;
@@ -829,11 +830,16 @@ function build_tests()
 function build()
 {
   case "$1" in
+    all)
+      shift 1
+      build_examples "$@"
+      build_tests "$@"
+      ;;
     examples) shift 1; build_examples "$@" ;;
     tests) shift 1; build_tests "$@" ;;
     *)
       echoError " Unknown build target: \"$1\""
-      echoError " valid: examples tests"
+      echoError " valid: all, examples, tests"
       exit 1;;
   esac
   return 0;
@@ -876,11 +882,16 @@ function run_tests()
 function run()
 {
   case "$1" in
+    all)
+      shift 1
+      run_examples "$@"
+      run_tests "$@"
+      ;;
     examples) shift 1; run_examples "$@" ;;
     tests) shift 1; run_tests "$@" ;;
     *)
       echoError " Unknown run target: \"$1\""
-      echoError " valid: examples tests"
+      echoError " valid: all, examples, tests"
       exit 1;;
   esac
   return 0;
