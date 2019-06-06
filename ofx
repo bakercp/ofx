@@ -724,14 +724,25 @@ function generate_project()
 {
   PROJECT_PATH=$1
 
+  PROJECT_MAKEFILE=${PROJECT_PATH}/Makefile
+  PROJECT_CONFIG_MAKE=${PROJECT_PATH}/config.make
+  TEMPLATE_MAKEFILE=${OF_SCRIPTS_PATH}/templates/${HOST_PLATFORM}/Makefile
+  TEMPLATE_CONFIG_MAKE=${OF_SCRIPTS_PATH}/templates/${HOST_PLATFORM}/config.make
+
   if [ ${OF_PROJECT_GENERATOR_AVAILABLE} == true ]; then
+    if [ -f ${PROJECT_MAKEFILE} ]; then
+      echoWarning "Removing and regenerating ${PROJECT_MAKEFILE} because of https://github.com/openframeworks/projectGenerator/issues/210."
+      rm ${PROJECT_MAKEFILE}
+    fi
+
+    if [ -f ${PROJECT_CONFIG_MAKE} ]; then
+      echoWarning "Removing and regenerating ${PROJECT_CONFIG_MAKE} because of https://github.com/openframeworks/projectGenerator/issues/210."
+      rm ${PROJECT_CONFIG_MAKE}
+    fi
+
     ${OF_PROJECT_GENERATOR_COMMAND} -o${OF_ROOT} ${PROJECT_PATH} -p${TARGET_PLATFORM}
   elif [ "${HOST_PLATFORM}" == "${TARGET_PLATFORM}" ] ; then
     echoWarning "Project Generator is not available, creating makefiles."
-    PROJECT_MAKEFILE=${PROJECT_PATH}/Makefile
-    PROJECT_CONFIG_MAKE=${PROJECT_PATH}/config.make
-    TEMPLATE_MAKEFILE=${OF_SCRIPTS_PATH}/templates/${HOST_PLATFORM}/Makefile
-    TEMPLATE_CONFIG_MAKE=${OF_SCRIPTS_PATH}/templates/${HOST_PLATFORM}/config.make
 
     PROJECT_PATH_RELATIVE_OF_ROOT=$(realpath --relative-to="${PROJECT_PATH}/.." "${OF_ROOT}")
 
