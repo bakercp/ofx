@@ -330,6 +330,7 @@ function clean_project_files()
 
 }
 
+
 function clean_example_project_files()
 {
   echoFancy "Cleaning" "example project files"
@@ -339,6 +340,7 @@ function clean_example_project_files()
   done
 }
 
+
 function clean_test_project_files()
 {
   echoFancy "Cleaning" "test project files"
@@ -347,6 +349,7 @@ function clean_test_project_files()
     clean_project_files ${test} $@
   done
 }
+
 
 # Arguments
 # $1 = path to a project.
@@ -618,6 +621,7 @@ function install_example_data()
   return 0;
 }
 
+
 function install_test_data()
 {
   echoFancy "Installing" "test data"
@@ -629,6 +633,7 @@ function install_test_data()
   return 0;
 }
 
+
 function list_examples()
 {
   echoFancy "Listing" "examples"
@@ -637,6 +642,7 @@ function list_examples()
     echo $example
   done
 }
+
 
 function list_tests()
 {
@@ -660,6 +666,7 @@ function list()
   esac
   return 0;
 }
+
 
 function clean()
 {
@@ -774,6 +781,7 @@ function generate_tests()
   done
 }
 
+
 function generate()
 {
   case "$1" in
@@ -816,6 +824,7 @@ function build_tests()
       echoSuccess "Built test: ${test#"${THIS_ADDON_PATH}/"}"
   done
 }
+
 
 function build()
 {
@@ -863,6 +872,7 @@ function run_tests()
 
 }
 
+
 function run()
 {
   case "$1" in
@@ -894,6 +904,7 @@ function bootstrap()
 
   return 0;
 }
+
 
 # handle commands
 echoVerbose "Running: $A_CMD $*"
