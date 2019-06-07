@@ -330,6 +330,7 @@ function get_addon_dependencies_from_all_projects()
   return 0
 }
 
+
 function get_all_addon_dependencies()
 {
   echo $(sort_and_remove_duplicates "$(get_addon_dependencies_from_addon_config_mk) $(get_addon_dependencies_from_all_projects)")
