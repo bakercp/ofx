@@ -11,7 +11,7 @@ set -o errexit   # set -e : exit the script if any statement returns a non-true 
 DEFAULT_CLONE_DEPTH=1
 # export MAKEFLAGS="-s"
 
-JOBS=1
+JOBS=$(nproc --ignore=1)
 
 # Is verbose?
 _VERBOSE=0
@@ -270,6 +270,74 @@ function clone_addons()
 }
 
 
+# Extract ADDON_DEPENDENCIES from an addon's addon_config.mk file.
+function get_addon_dependencies_from_addon_config_mk()
+{
+  if [ -f ${THIS_ADDON_PATH}/addon_config.mk ]; then
+    local ADDON_DEPENDENCIES=""
+    while read line; do
+      if [[ $line == ADDON_DEPENDENCIES* ]] ;
+      then
+        line=${line#*=}
+        IFS=' ' read -ra ADDR <<< "$line"
+        for i in "${ADDR[@]}"; do
+          ADDON_DEPENDENCIES="${ADDON_DEPENDENCIES} ${i}"
+        done
+      fi
+    done < ${THIS_ADDON_PATH}/addon_config.mk
+    echo $(sort_and_remove_duplicates "${ADDON_DEPENDENCIES}")
+  fi
+  return 0
+}
+
+
+# Extract ADDON_DEPENDENCIES from an project's addons.make files.
+function get_addon_dependencies_from_project()
+{
+  local ADDON_DEPENDENCIES=""
+  while read addon; do
+    ADDON_DEPENDENCIES="${ADDON_DEPENDENCIES} ${addon}"
+  done < $1/addons.make
+  echo $(sort_and_remove_duplicates "${ADDON_DEPENDENCIES}")
+  return 0
+}
+
+function get_addon_dependencies_from_all_examples()
+{
+  local ADDON_DEPENDENCIES=""
+  while read project; do
+    ADDON_DEPENDENCIES="${ADDON_DEPENDENCIES} $(get_addon_dependencies_from_project "${project}")"
+  done <<< $(find ${THIS_ADDON_PATH}/example* -name addons.make -exec dirname {} \;)
+  echo $(sort_and_remove_duplicates "${ADDON_DEPENDENCIES}")
+  return 0
+}
+
+
+function get_addon_dependencies_from_all_tests()
+{
+  local ADDON_DEPENDENCIES=""
+  while read project; do
+    ADDON_DEPENDENCIES="${ADDON_DEPENDENCIES} $(get_addon_dependencies_from_project "${project}")"
+  done <<< $(find ${THIS_ADDON_PATH}/tests -name addons.make -exec dirname {} \;)
+  echo $(sort_and_remove_duplicates "${ADDON_DEPENDENCIES}")
+  return 0
+}
+
+
+function get_addon_dependencies_from_all_projects()
+{
+  echo $(sort_and_remove_duplicates "$(get_addon_dependencies_from_all_examples) $(get_addon_dependencies_from_all_tests)")
+  return 0
+}
+
+function get_all_addon_dependencies()
+{
+  echo $(sort_and_remove_duplicates "$(get_addon_dependencies_from_addon_config_mk) $(get_addon_dependencies_from_all_projects)")
+  return 0
+}
+
+
+
 function install_dependencies()
 {
   echoFancy "Installing" "dependencies"
@@ -368,11 +436,12 @@ function list()
 {
   case "$1" in
     examples) shift 1; list_examples "$@" ;;
+    addon_dependencies) shift 1; list_addon_dependencies "$@" ;;
     tests) shift 1; list_tests "$@" ;;
     dependencies) shift 1; get_all_addon_dependencies "$@" ;;
     *)
       echoError " Unknown list target: \"$1\""
-      echoError " valid: examples, tests"
+      echoError " valid: examples, addon_dependencies, tests"
       exit 1 ;;
   esac
 }
@@ -428,6 +497,7 @@ function install()
   esac
 }
 
+
 function generate_examples()
 {
   (do_function_for_projects generate_project "${EXAMPLE_PROJECTS}" $@)
@@ -456,6 +526,7 @@ function generate()
       exit 1;;
   esac
 }
+
 
 function build_examples()
 {
@@ -557,5 +628,7 @@ case "$A_CMD" in
     echoError " Unknown command \"$A_CMD\""
     exit 1 ;;
 esac
+
+
 
 exit 0
