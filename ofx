@@ -60,56 +60,8 @@ echoSuccess() { echo -e "✅  $CON_BOLD$CON_GREEN$1$CON_DEFAULT"; }
 echoVerbose() { if [ $_VERBOSE == 1 ] ; then echoInfo "$1"; fi }
 echoFancy() { echo -e "💪  ${1} $CON_YELLOW_UNDERLINE${2}$CON_DEFAULT ..."; }
 
-# \returns the string as lowercase.
-function lowercase()
-{
-  echo "${1}" | sed "y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/"
-  return 0
-}
-
-# \returns the name of the OS.
-function os()
-{
-  local OS
-  OS="$(lowercase "$(uname)")"
-
-  if [ "${OS}" == "darwin" ]; then
-    OS="osx"
-  elif [ "${OS}" == "windowsnt" ] ; then
-    OS="vs"
-  elif [ "${OS:0:5}" == "mingw" ] || [ "${OS}" == "msys_nt-6.3" ]; then
-    OS="msys2"
-  elif [ "${OS}" == "linux" ]; then
-    ARCH=`uname -m`
-    if [ "${ARCH}" == "i386" ] || [ "${ARCH}" == "i686" ] ; then
-      OS="linux"
-    elif [ "${ARCH}" == "x86_64" ] ; then
-      OS="linux64"
-    elif [ "${ARCH}" == "armv6l" ] ; then
-      OS="linuxarmv6l"
-    elif [ "${ARCH}" == "armv7l" ] ; then
-      # Make an exception for raspberry pi to run on armv6l, to conform
-      # with openFrameworks.
-      if [ -f /opt/vc/include/bcm_host.h ]; then
-        OS="linuxarmv6l"
-      else
-        OS="linuxarmv7l"
-      fi
-    else
-      # We don't know this one, but we will try to make a reasonable guess.
-      OS="linux"${ARCH}
-    fi
-  fi
-  echo ${OS}
-  return 0
-}
-
-
-function is_same_file()
-{
-  cmp --silent $1 $2 && echo "1" || echo "0"
-  return 0;
-}
+# Include the Functions.
+source "$( dirname "${BASH_SOURCE[0]}" )/lib/functions.sh"
 
 # Tutorial: https://wiki.bash-hackers.org/howto/getopts_tutorial
 
@@ -283,241 +235,45 @@ if [ $_VERBOSE == 1 ]; then
   echo "================================================================================"
 fi
 
-################################################################################
-# Functions
-################################################################################
+# Include the Helpers.
+source "$( dirname "${BASH_SOURCE[0]}" )/lib/apothecary_helper.sh"
+source "$( dirname "${BASH_SOURCE[0]}" )/lib/project_helper.sh"
+source "$( dirname "${BASH_SOURCE[0]}" )/lib/dependency_helper.sh"
 
 
-# Arguments
-# $1 = path to a project.
-# $1 = if "force", force clean.
-function clean_project_files()
+# Clone the list of addons and check to make sure all dependencies are satisfied and cloned.
+function clone_addons()
 {
-  PROJECT_PATH=$1
+  for addon in "$@"
+  do
+    if [ ! -d ${OF_ADDONS_PATH}/${addon} ]; then
+      echoInfo "Installing: ${OF_ADDONS_PATH}/${addon}"
+      git clone --quiet --depth=${ADDON_CLONE_DEPTH} -b ${ADDON_CLONE_BRANCH} https://github.com/${ADDON_CLONE_USERNAME}/${addon}.git ${OF_ADDONS_PATH}/${addon}
 
-  if [ $# -gt 1 ]; then
-    FORCE_CLEAN=true
-  else
-    FORCE_CLEAN=false
-  fi
+      # TODO, bootstrap this addon if freshly cloned.
 
-  if [ "${FORCE_CLEAN}" == "true" ]; then
-    # Here we force clean the makefiles and config.make.
-    find ${PROJECT_PATH} -maxdepth 1 \
-    \( \
-          -name "*.qbs" \
-      -o -name "*.xcodeproj" \
-      -o -name "*.xcconfig" \
-      -o -name "*.plist" \
-      -o -name "*.qbs.user" \
-      -o -name "config.make" \
-      -o -name "Makefile" \
-    \) \
-    -exec rm -rf {} \;
-  else
-    find ${PROJECT_PATH} -maxdepth 1 \
-    \( \
-          -name "*.qbs" \
-      -o -name "*.xcodeproj" \
-      -o -name "*.xcconfig" \
-      -o -name "*.plist" \
-      -o -name "*.qbs.user" \
-    \) \
-    -exec rm -rf {} \;
-  fi
+      local _REQUIRED_ADDONS=$(get_addon_dependencies_for_addon ${OF_ADDONS_PATH}/${addon})
 
-  echoSuccess "Cleaned: ${PROJECT_PATH#"${THIS_ADDON_PATH}/"}"
-
-}
-
-
-function clean_example_project_files()
-{
-  echoFancy "Cleaning" "example project files"
-
-  find ${THIS_ADDON_PATH}/example* -name addons.make -exec dirname {} \; | while read -r example; do
-    clean_project_files ${example} $@
-  done
-}
-
-
-function clean_test_project_files()
-{
-  echoFancy "Cleaning" "test project files"
-
-  find ${THIS_ADDON_PATH}/tests -name addons.make -exec dirname {} \; | while read -r test; do
-    clean_project_files ${test} $@
-  done
-}
-
-
-# Arguments
-# $1 = path to a project.
-# $1 = if "force", force clean.
-function clean_project_build_files()
-{
-  PROJECT_PATH=$1
-
-  if [ $# -gt 1 ]; then
-    FORCE_CLEAN=true
-  else
-    FORCE_CLEAN=false
-  fi
-
-  echoFancy "Cleaning" "QTCreatorBuild paths"
-
-  find ${PROJECT_PATH} -maxdepth 1 \( \
-      -type d -a \
-      -name "build-example*" \
-    \)  -exec rm -rf {} \;
-
-  find ${PROJECT_PATH} -maxdepth 1 \( \
-        -type d -a \
-        -name "_obj*" \
-    \)  -exec rm -rf {} \;
-
-  echoFancy "Cleaning" "project build files"
-  find ${PROJECT_PATH} -maxdepth 1 \( \
-      -type d -a \
-      -name "obj" \
-    \)  -exec rm -rf {} \;
-
-  if [ -d ${PROJECT_PATH}/bin ] ; then
-    echoFancy "Cleaning" "project app files"
-    find ${PROJECT_PATH}/bin -maxdepth 1 \( \
-        -name "*.app" \
-      -o -name "*.app.dSYM" \
-      -o -name "PkgInfo" \
-      -o -name ".tmp" \
-      -o -name "*.plist" \
-      \)  -exec rm -rf {} \;
-  fi
-  echoSuccess "Cleaned: ${PROJECT_PATH#"${THIS_ADDON_PATH}/"}"
-
-  return 0;
-}
-
-function clean_example_build_files()
-{
-  echoFancy "Cleaning" "Example Build Files"
-
-  find ${THIS_ADDON_PATH}/example* -name addons.make -exec dirname {} \; | while read -r example; do
-    clean_project_build_files ${example} $@
-  done
-
-  return 0;
-}
-
-
-function clean_test_build_files()
-{
-  echoFancy "Cleaning" "Test Build Files"
-
-  find ${THIS_ADDON_PATH}/tests -name addons.make -exec dirname {} \; | while read -r test; do
-    clean_project_build_files ${test} $@
-  done
-
-  return 0;
-}
-
-
-function clean_apothecary()
-{
-  if ! [ -f ${OF_APOTHECARY_PATH}/apothecary/apothecary ] ; then
-    echoError "Apothecary not installed."
-    exit 1;
-  fi
-
-  echoFancy "Building " "${THIS_ADDON_NAME} libraries for ${TARGET_PLATFORM}"
-  /usr/bin/env bash ${OF_APOTHECARY_PATH}/apothecary/apothecary -j ${JOBS} -t "${TARGET_PLATFORM}" -d "${THIS_ADDON_PATH}/libs" clean "${THIS_ADDON_NAME}"
-  echoSuccess "Cleaning of ${THIS_ADDON_NAME} for ${TARGET_PLATFORM} complete."
-}
-
-
-function install_apothecary()
-{
-  # Check to see if apothecary is already installed.
-  if ! [ -f ${OF_APOTHECARY_PATH}/apothecary/apothecary ] ; then
-    echoInfo "Apothecary not installed, pulling latest version."
-    git clone https://github.com/openframeworks/apothecary.git ${OF_APOTHECARY_PATH}/
-  else
-    pushd "${OF_APOTHECARY_PATH}/" > /dev/null
-    if git rev-parse --is-inside-work-tree ; then
-        echoInfo "Apothecary is under git control, updating."
-        git pull origin master
-    else
-        echoWarning "Apothecary is not under git control, so it may not be up-to-date."
+      for required_addon in ${_REQUIRED_ADDONS}
+      do
+        if [ ! -d ${OF_ADDONS_PATH}/${required_addon} ]; then
+          clone_addons ${required_addon}
+        else
+          echoSuccess "Dependency satisfied: ${required_addon}"
+        fi
+      done
+    else 
+      echoSuccess "Dependency satisfied ${addon} by: ${OF_ADDONS_PATH}/${addon}"
     fi
-    popd > /dev/null
-  fi
-
-  if [ "${HOST_PLATFORM}" == "osx" ]; then
-    if ! [ -x "$(command -v brew)" ]; then
-      echoError "Brew is not installed. Go here and install it: https://brew.sh/." >&2
-      exit 1
-    else
-      echoInfo "Brew is installed, continuing."
-    fi
-
-    if xcrun -sdk iphoneos --show-sdk-version ; then
-      echoInfo "macOS iOS SDK Found"
-    else
-      echoError "The SDK path is not set correctly ..."
-
-      if ! [ -e "/Applications/Xcode.app/Contents/Developer" ]; then
-        echoError "Xcode is NOT installed."
-        echoError "Install it from the App Store, then open the application and agree to the license."
-      else
-        echoError "Xcode is installed, so try running:"
-        echo ""
-        echoWarning "    sudo xcode-select -s /Applications/Xcode.app/Contents/Developer/"
-        echo ""
-        echoWarning "    Or ..."
-        echo ""
-        echoWarning "    1) Open Xcode Preferences ..."
-        echoWarning "    2) Got to the Locations tab ..."
-        echoWarning "    3) Make sure the Command Line Tools are set to the latest version ..."
-        echo ""
-      fi
-
-      echoError "Then run this command again."
-
-      exit 1
-    fi
-  fi
-
-  # Install any apothecary dependencies.
-  if [ -f ${OF_APOTHECARY_PATH}/scripts/${HOST_PLATFORM}/install.sh ] ; then
-    echoFancy "Installing" "Apothecary Dependencies"
-    /usr/bin/env bash ${OF_APOTHECARY_PATH}/scripts/${HOST_PLATFORM}/install.sh
-  else
-    echoInfo "No additional apothecary dependencies to install."
-  fi
-
-  echoSuccess "Done installing apothecary."
-  return 0;
+  done
+  return 0
 }
 
 
 function install_dependencies()
 {
-  echoFancy "Installing" "System Dependencies"
-
-  if [ -f ${THIS_ADDON_PATH}/scripts/${TARGET_PLATFORM}/install.sh ] ; then
-    /usr/bin/env bash ${THIS_ADDON_PATH}/scripts/${TARGET_PLATFORM}/install.sh
-  fi
-
-  echoFancy "Installing" "3rd Party Libraries"
-
-  if ! [ -f ${OF_APOTHECARY_PATH}/apothecary/apothecary ] ; then
-    echoError "Apothecary not installed."
-    exit 1;
-  fi
-
-  echoFancy "Building " "${THIS_ADDON_NAME} libraries for ${TARGET_PLATFORM}"
-  /usr/bin/env bash ${OF_APOTHECARY_PATH}/apothecary/apothecary -j${JOBS} -t "${TARGET_PLATFORM}" -d "${THIS_ADDON_PATH}/libs" update "${THIS_ADDON_NAME}"
-  echoSuccess "Build of ${THIS_ADDON_NAME} for ${TARGET_PLATFORM} complete."
-  return 0;
+  echoFancy "Installing" "dependencies"
+  (clone_addons $(get_all_addon_dependencies))
 }
 
 
@@ -531,14 +287,12 @@ function install_shared_data()
       /usr/bin/env bash ${script}
     done
   fi
-
-  return 0;
 }
 
 
 function install_data_for_project()
 {
-    PROJECT_PATH=$1
+    local PROJECT_PATH=$1
     local did_install=false
     if [ -d ${PROJECT_PATH}/bin/data ] ; then
 
@@ -610,61 +364,17 @@ function install_data_for_project()
 }
 
 
-function install_example_data()
-{
-  echoFancy "Installing" "example data"
-
-  find ${THIS_ADDON_PATH}/example* -name addons.make -exec dirname {} \; | while read -r example; do
-    install_data_for_project ${example}
-  done
-
-  return 0;
-}
-
-
-function install_test_data()
-{
-  echoFancy "Installing" "test data"
-
-  find ${THIS_ADDON_PATH}/tests -name addons.make -exec dirname {} \; | while read -r test; do
-    install_data_for_project ${test}
-  done
-
-  return 0;
-}
-
-
-function list_examples()
-{
-  echoFancy "Listing" "examples"
-
-  find ${THIS_ADDON_PATH}/example* -name addons.make -exec dirname {} \; | while read -r example; do
-    echo $example
-  done
-}
-
-
-function list_tests()
-{
-  echoFancy "Listing" "tests"
-
-  find ${THIS_ADDON_PATH}/tests -name addons.make -exec dirname {} \; | while read -r example; do
-    echo $example
-  done
-}
-
-
 function list()
 {
   case "$1" in
     examples) shift 1; list_examples "$@" ;;
     tests) shift 1; list_tests "$@" ;;
+    dependencies) shift 1; get_all_addon_dependencies "$@" ;;
     *)
       echoError " Unknown list target: \"$1\""
       echoError " valid: examples, tests"
       exit 1 ;;
   esac
-  return 0;
 }
 
 
@@ -699,7 +409,6 @@ function clean()
       echoError " valid: all, apothecary, example_project_files, test_project_files, example_build_files, test_build_files, projects, build"
       exit 1 ;;
   esac
-  return 0;
 }
 
 
@@ -708,84 +417,26 @@ function install()
   case "$1" in
     apothecary) shift 1; install_apothecary "$@" ;;
     dependencies) shift 1; install_dependencies "$@" ;;
+    libraries) shift 1; install_libraries "$@" ;;
     shared_data) shift 1; install_shared_data "$@" ;;
     example_data) shift 1; install_example_data "$@" ;;
     test_data) shift 1; install_test_data "$@" ;;
     *)
       echoError " Unknown install target: \"$1\""
-      echoError " valid: apothecary, dependencies, shared_data, example_data test_data"
+      echoError " valid: apothecary, dependencies, libraries, shared_data, example_data test_data"
       exit 1;;
   esac
-  return 0;
-}
-
-
-function generate_project()
-{
-  PROJECT_PATH=$1
-
-  PROJECT_MAKEFILE=${PROJECT_PATH}/Makefile
-  PROJECT_CONFIG_MAKE=${PROJECT_PATH}/config.make
-  TEMPLATE_MAKEFILE=${OF_SCRIPTS_PATH}/templates/${HOST_PLATFORM}/Makefile
-  TEMPLATE_CONFIG_MAKE=${OF_SCRIPTS_PATH}/templates/${HOST_PLATFORM}/config.make
-
-  if [ ${OF_PROJECT_GENERATOR_AVAILABLE} == true ]; then
-    if [ -f ${PROJECT_MAKEFILE} ]; then
-      echoWarning "Removing and regenerating ${PROJECT_MAKEFILE} because of https://github.com/openframeworks/projectGenerator/issues/210."
-      rm ${PROJECT_MAKEFILE}
-    fi
-
-    if [ -f ${PROJECT_CONFIG_MAKE} ]; then
-      echoWarning "Removing and regenerating ${PROJECT_CONFIG_MAKE} because of https://github.com/openframeworks/projectGenerator/issues/210."
-      rm ${PROJECT_CONFIG_MAKE}
-    fi
-
-    ${OF_PROJECT_GENERATOR_COMMAND} -o${OF_ROOT} ${PROJECT_PATH} -p${TARGET_PLATFORM}
-  elif [ "${HOST_PLATFORM}" == "${TARGET_PLATFORM}" ] ; then
-    echoWarning "Project Generator is not available, creating makefiles."
-
-    PROJECT_PATH_RELATIVE_OF_ROOT=$(realpath --relative-to="${PROJECT_PATH}/.." "${OF_ROOT}")
-
-    if ! [ -f ${PROJECT_MAKEFILE} ]; then
-      cp ${TEMPLATE_MAKEFILE} ${PROJECT_PATH}
-      sed -i'.bak' -e 's|\.\./\.\.|'${PROJECT_PATH_RELATIVE_OF_ROOT}'|g' ${PROJECT_MAKEFILE}
-      rm ${PROJECT_MAKEFILE}.bak
-    else
-      echoInfo "${PROJECT_PATH} already has a Makefile."
-    fi
-
-    if ! [ -f ${PROJECT_CONFIG_MAKE} ]; then
-      cp ${TEMPLATE_CONFIG_MAKE} ${PROJECT_PATH}
-      sed -i'.bak' -e 's|\.\./\.\.|'${PROJECT_PATH_RELATIVE_OF_ROOT}'|g' ${PROJECT_CONFIG_MAKE}
-      rm ${PROJECT_CONFIG_MAKE}.bak
-    else
-      echoInfo "${PROJECT_PATH} already has a config.make file."
-    fi
-  else
-      echoError "If TARGET_PLATFORM ${TARGET_PLATFORM} != HOST_PLATFORM ${HOST_PLATFORM}, projectGenerator is needed."
-      exit 1
-  fi
 }
 
 function generate_examples()
 {
-  echoFancy "Generating" "examples"
-
-  find ${THIS_ADDON_PATH}/example* -name addons.make -exec dirname {} \; | while read -r example; do
-      generate_project ${example}
-      echoSuccess "Generated example: ${example#"${THIS_ADDON_PATH}/"}"
-  done
+  (do_function_for_projects generate_project "${EXAMPLE_PROJECTS}" $@)
 }
 
 
 function generate_tests()
 {
-  echoFancy "Generating" "tests"
-
-  find ${THIS_ADDON_PATH}/tests -name addons.make -exec dirname {} \; | while read -r test; do
-      generate_project ${test}
-      echoSuccess "Generated test: ${test#"${THIS_ADDON_PATH}/"}"
-  done
+  (do_function_for_projects generate_project "${TEST_PROJECTS}" $@)
 }
 
 
@@ -804,37 +455,17 @@ function generate()
       echoError " valid: all, examples, tests"
       exit 1;;
   esac
-  return 0;
-}
-
-
-function build_project()
-{
-  PROJECT_PATH=$1
-  pushd $PROJECT_PATH > /dev/null
-  make -j${JOBS} -s
-  popd > /dev/null
 }
 
 function build_examples()
 {
-  echoFancy "Build" "examples"
-
-  find ${THIS_ADDON_PATH}/example* -name addons.make -exec dirname {} \; | while read -r example; do
-      build_project ${example} $@
-      echoSuccess "Built example: ${example#"${THIS_ADDON_PATH}/"}"
-  done
+  (do_function_for_projects build_project "${EXAMPLE_PROJECTS}" $@)
 }
 
 
 function build_tests()
 {
-  echoFancy "Build" "tests"
-
-  find ${THIS_ADDON_PATH}/tests -name addons.make -exec dirname {} \; | while read -r test; do
-      build_project ${test} $@
-      echoSuccess "Built test: ${test#"${THIS_ADDON_PATH}/"}"
-  done
+  (do_function_for_projects build_project "${TEST_PROJECTS}" $@)
 }
 
 
@@ -853,40 +484,18 @@ function build()
       echoError " valid: all, examples, tests"
       exit 1;;
   esac
-  return 0;
-}
-
-
-function run_project()
-{
-  PROJECT_PATH=$1
-  pushd $PROJECT_PATH > /dev/null
-  make -j${JOBS} -s run
-  popd > /dev/null
 }
 
 
 function run_examples()
 {
-  echoFancy "Run" "examples"
-
-  find ${THIS_ADDON_PATH}/example* -name addons.make -exec dirname {} \; | while read -r example; do
-      run_project ${example} $@
-      echoSuccess "Ran example: ${example#"${THIS_ADDON_PATH}/"}"
-  done
-
+  (do_function_for_projects run_project "${EXAMPLE_PROJECTS}" $@)
 }
 
 
 function run_tests()
 {
-  echoFancy "Run" "tests"
-
-  find ${THIS_ADDON_PATH}/tests -name addons.make -exec dirname {} \; | while read -r test; do
-      run_project ${test} $@
-      echoSuccess "Ran test: ${test#"${THIS_ADDON_PATH}/"}"
-  done
-
+  (do_function_for_projects run_project "${TEST_PROJECTS}" $@)
 }
 
 
@@ -905,7 +514,6 @@ function run()
       echoError " valid: all, examples, tests"
       exit 1;;
   esac
-  return 0;
 }
 
 
@@ -919,12 +527,11 @@ function bootstrap()
   echo -e "\tdevice.\"\n"
 
   install_apothecary
+  install_libraries
   install_dependencies
   install_shared_data
   install_example_data
   install_test_data
-
-  return 0;
 }
 
 
