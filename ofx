@@ -11,7 +11,7 @@ set -o errexit   # set -e : exit the script if any statement returns a non-true 
 DEFAULT_CLONE_DEPTH=1
 # export MAKEFLAGS="-s"
 
-JOBS=1
+JOBS=$(nproc --ignore=1)
 
 # Is verbose?
 _VERBOSE=0
@@ -60,14 +60,17 @@ echoSuccess() { echo -e "✅  $CON_BOLD$CON_GREEN$1$CON_DEFAULT"; }
 echoVerbose() { if [ $_VERBOSE == 1 ] ; then echoInfo "$1"; fi }
 echoFancy() { echo -e "💪  ${1} $CON_YELLOW_UNDERLINE${2}$CON_DEFAULT ..."; }
 
-# \returns the string as lowercase.
+# \brief Convert a string to lower case.
+# \param $1 A string.
+# \returns a lowercase string an a 0 exit code on success.
 function lowercase()
 {
   echo "${1}" | sed "y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/"
   return 0
 }
 
-# \returns the name of the OS.
+# \brief Get the openFrameworks name of the host operating system.
+# \returns a string an a 0 exit code on success.
 function os()
 {
   local OS
@@ -104,7 +107,19 @@ function os()
   return 0
 }
 
+# \brief Get the openFrameworks name of the host operating system.
+# \param $1 The space-delimited string to de-duplicated and sort.
+# \returns a string an a 0 exit code on success.
+function sort_and_remove_duplicates()
+{
+    echo $(echo ${1} | tr ' ' '\n' | sort -u | tr '\n' ' ')
+    return 0
+}
 
+# \brief Compare two files using cmp.
+# \param $1 The first file.
+# \param $2 The second file.
+# \returns a "1" on match or a "0" on failure and a 0 exit code on success.
 function is_same_file()
 {
   cmp --silent $1 $2 && echo "1" || echo "0"
@@ -287,23 +302,21 @@ fi
 # Functions
 ################################################################################
 
-
-# Arguments
-# $1 = path to a project.
-# $1 = if "force", force clean.
+# \brief Clean all project files from the given project.
+# \param $1 The project to clean.
+# \param $2 (optional) To force clean all project files.
+# \returns 0 exit code on success.
 function clean_project_files()
 {
-  PROJECT_PATH=$1
+  local FORCE_CLEAN=false
 
-  if [ $# -gt 1 ]; then
+  if [ $# -gt 1 ] && [ "$2" == "force" ]; then
     FORCE_CLEAN=true
-  else
-    FORCE_CLEAN=false
   fi
 
   if [ "${FORCE_CLEAN}" == "true" ]; then
     # Here we force clean the makefiles and config.make.
-    find ${PROJECT_PATH} -maxdepth 1 \
+    find $1 -maxdepth 1 \
     \( \
           -name "*.qbs" \
       -o -name "*.xcodeproj" \
@@ -315,7 +328,7 @@ function clean_project_files()
     \) \
     -exec rm -rf {} \;
   else
-    find ${PROJECT_PATH} -maxdepth 1 \
+    find $1 -maxdepth 1 \
     \( \
           -name "*.qbs" \
       -o -name "*.xcodeproj" \
@@ -326,65 +339,44 @@ function clean_project_files()
     -exec rm -rf {} \;
   fi
 
-  echoSuccess "Cleaned: ${PROJECT_PATH#"${THIS_ADDON_PATH}/"}"
+  echoSuccess "Cleaned Project Files For: $1"
 
+  return 0;
 }
 
 
-function clean_example_project_files()
-{
-  echoFancy "Cleaning" "example project files"
-
-  find ${THIS_ADDON_PATH}/example* -name addons.make -exec dirname {} \; | while read -r example; do
-    clean_project_files ${example} $@
-  done
-}
-
-
-function clean_test_project_files()
-{
-  echoFancy "Cleaning" "test project files"
-
-  find ${THIS_ADDON_PATH}/tests -name addons.make -exec dirname {} \; | while read -r test; do
-    clean_project_files ${test} $@
-  done
-}
-
-
-# Arguments
-# $1 = path to a project.
-# $1 = if "force", force clean.
+# \brief Clean all build files from the given project.
+# \param $1 The project to clean.
+# \param $2 (optional) To force clean all build files.
+# \returns 0 exit code on success.
 function clean_project_build_files()
 {
-  PROJECT_PATH=$1
+  local FORCE_CLEAN=false
 
-  if [ $# -gt 1 ]; then
+  if [ $# -gt 1 ] && [ "$2" == "force" ]; then
     FORCE_CLEAN=true
-  else
-    FORCE_CLEAN=false
   fi
 
-  echoFancy "Cleaning" "QTCreatorBuild paths"
-
-  find ${PROJECT_PATH} -maxdepth 1 \( \
+  # QTCreatorBuild paths
+  find $1 -maxdepth 1 \( \
       -type d -a \
       -name "build-example*" \
     \)  -exec rm -rf {} \;
 
-  find ${PROJECT_PATH} -maxdepth 1 \( \
+  find $1 -maxdepth 1 \( \
         -type d -a \
         -name "_obj*" \
     \)  -exec rm -rf {} \;
 
-  echoFancy "Cleaning" "project build files"
-  find ${PROJECT_PATH} -maxdepth 1 \( \
+  # Project build files
+  find $1 -maxdepth 1 \( \
       -type d -a \
       -name "obj" \
     \)  -exec rm -rf {} \;
 
-  if [ -d ${PROJECT_PATH}/bin ] ; then
-    echoFancy "Cleaning" "project app files"
-    find ${PROJECT_PATH}/bin -maxdepth 1 \( \
+  if [ -d $1/bin ] ; then
+    # Project app files
+    find $1/bin -maxdepth 1 \( \
         -name "*.app" \
       -o -name "*.app.dSYM" \
       -o -name "PkgInfo" \
@@ -392,18 +384,61 @@ function clean_project_build_files()
       -o -name "*.plist" \
       \)  -exec rm -rf {} \;
   fi
-  echoSuccess "Cleaned: ${PROJECT_PATH#"${THIS_ADDON_PATH}/"}"
+  echoSuccess "Cleaned Build Files For: $1"
 
   return 0;
 }
+
+function find_projects()
+{
+  # Here we just print the parent directory. -printf '%h\n' is the same as -exec dirname {} \;
+  # \returns 0 exit code on success.
+  echo $(find $1 -name addons.make -printf '%h\n')
+  return 0
+}
+
+function find_example_projects()
+{
+  echo $(find_projects $1/example*)
+  return 0
+}
+
+# \brief Print every test folder with a valid addons.make path.
+function get_tests()
+{
+  echo $(find_projects $1/tests)
+  return 0
+}
+
+
+function clean_example_project_files()
+{
+  echoFancy "Cleaning" "Example Project Files"
+
+  for project in $(get_examples); do
+    clean_project_files "${project}" $@
+  done
+}
+
+
+function clean_test_project_files()
+{
+  echoFancy "Cleaning" "Test Project Files"
+
+  while read project; do
+    clean_project_files ${project} $@
+  done <<< $(find ${THIS_ADDON_PATH}/tests -name addons.make -exec dirname {} \;)
+
+}
+
 
 function clean_example_build_files()
 {
   echoFancy "Cleaning" "Example Build Files"
 
-  find ${THIS_ADDON_PATH}/example* -name addons.make -exec dirname {} \; | while read -r example; do
-    clean_project_build_files ${example} $@
-  done
+  while read project; do
+    clean_project_build_files ${project} $@
+  done <<< $(find ${THIS_ADDON_PATH}/example* -name addons.make -exec dirname {} \;)
 
   return 0;
 }
@@ -413,9 +448,9 @@ function clean_test_build_files()
 {
   echoFancy "Cleaning" "Test Build Files"
 
-  find ${THIS_ADDON_PATH}/tests -name addons.make -exec dirname {} \; | while read -r test; do
-    clean_project_build_files ${test} $@
-  done
+  while read project; do
+    clean_project_build_files ${project} $@
+  done <<< $(find ${THIS_ADDON_PATH}/tests -name addons.make -exec dirname {} \;)
 
   return 0;
 }
@@ -430,7 +465,7 @@ function clean_apothecary()
 
   echoFancy "Building " "${THIS_ADDON_NAME} libraries for ${TARGET_PLATFORM}"
   /usr/bin/env bash ${OF_APOTHECARY_PATH}/apothecary/apothecary -j ${JOBS} -t "${TARGET_PLATFORM}" -d "${THIS_ADDON_PATH}/libs" clean "${THIS_ADDON_NAME}"
-  echoSuccess "Cleaning of ${THIS_ADDON_NAME} for ${TARGET_PLATFORM} complete."
+  echoSuccess "Apothecary cleaning of ${THIS_ADDON_NAME} for ${TARGET_PLATFORM} complete."
 }
 
 
@@ -497,6 +532,74 @@ function install_apothecary()
   echoSuccess "Done installing apothecary."
   return 0;
 }
+
+
+# Extract ADDON_DEPENDENCIES from an addon's addon_config.mk file.
+function get_addon_dependencies_from_addon_config_mk()
+{
+  if [ -f ${THIS_ADDON_PATH}/addon_config.mk ]; then
+    local ADDON_DEPENDENCIES=""
+    while read line; do
+      if [[ $line == ADDON_DEPENDENCIES* ]] ;
+      then
+        line=${line#*=}
+        IFS=' ' read -ra ADDR <<< "$line"
+        for i in "${ADDR[@]}"; do
+          ADDON_DEPENDENCIES="${ADDON_DEPENDENCIES} ${i}"
+        done
+      fi
+    done < ${THIS_ADDON_PATH}/addon_config.mk
+    echo $(sort_and_remove_duplicates "${ADDON_DEPENDENCIES}")
+  fi
+  return 0
+}
+
+
+# Extract ADDON_DEPENDENCIES from an project's addons.make files.
+function get_addon_dependencies_from_project()
+{
+  local ADDON_DEPENDENCIES=""
+  while read addon; do
+    ADDON_DEPENDENCIES="${ADDON_DEPENDENCIES} ${addon}"
+  done < $1/addons.make
+  echo $(sort_and_remove_duplicates "${ADDON_DEPENDENCIES}")
+  return 0
+}
+
+function get_addon_dependencies_from_all_examples()
+{
+  local ADDON_DEPENDENCIES=""
+  while read project; do
+    ADDON_DEPENDENCIES="${ADDON_DEPENDENCIES} $(get_addon_dependencies_from_project "${project}")"
+  done <<< $(find ${THIS_ADDON_PATH}/example* -name addons.make -exec dirname {} \;)
+  echo $(sort_and_remove_duplicates "${ADDON_DEPENDENCIES}")
+  return 0
+}
+
+
+function get_addon_dependencies_from_all_tests()
+{
+  local ADDON_DEPENDENCIES=""
+  while read project; do
+    ADDON_DEPENDENCIES="${ADDON_DEPENDENCIES} $(get_addon_dependencies_from_project "${project}")"
+  done <<< $(find ${THIS_ADDON_PATH}/tests -name addons.make -exec dirname {} \;)
+  echo $(sort_and_remove_duplicates "${ADDON_DEPENDENCIES}")
+  return 0
+}
+
+
+function get_addon_dependencies_from_all_projects()
+{
+  echo $(sort_and_remove_duplicates "$(get_addon_dependencies_from_all_examples) $(get_addon_dependencies_from_all_tests)")
+  return 0
+}
+
+function get_all_addon_dependencies()
+{
+  echo $(sort_and_remove_duplicates "$(get_addon_dependencies_from_addon_config_mk) $(get_addon_dependencies_from_all_projects)")
+  return 0
+}
+
 
 
 function install_dependencies()
@@ -613,11 +716,9 @@ function install_data_for_project()
 function install_example_data()
 {
   echoFancy "Installing" "example data"
-
-  find ${THIS_ADDON_PATH}/example* -name addons.make -exec dirname {} \; | while read -r example; do
-    install_data_for_project ${example}
-  done
-
+  while read project; do
+    install_data_for_project ${project}
+  done <<< $(find ${THIS_ADDON_PATH}/example* -name addons.make -exec dirname {} \;)
   return 0;
 }
 
@@ -625,11 +726,9 @@ function install_example_data()
 function install_test_data()
 {
   echoFancy "Installing" "test data"
-
-  find ${THIS_ADDON_PATH}/tests -name addons.make -exec dirname {} \; | while read -r test; do
-    install_data_for_project ${test}
-  done
-
+  while read project; do
+    install_data_for_project ${project}
+  done <<< $(find ${THIS_ADDON_PATH}/tests -name addons.make -exec dirname {} \;)
   return 0;
 }
 
@@ -638,9 +737,17 @@ function list_examples()
 {
   echoFancy "Listing" "examples"
 
-  find ${THIS_ADDON_PATH}/example* -name addons.make -exec dirname {} \; | while read -r example; do
-    echo $example
-  done
+  while read project; do
+    echo ${project}
+  done <<< $(find ${THIS_ADDON_PATH}/example* -name addons.make -exec dirname {} \;)
+}
+
+
+function list_addon_dependencies()
+{
+  echoFancy "Listing" "addon dependencies"
+
+  get_all_addon_dependencies
 }
 
 
@@ -648,9 +755,10 @@ function list_tests()
 {
   echoFancy "Listing" "tests"
 
-  find ${THIS_ADDON_PATH}/tests -name addons.make -exec dirname {} \; | while read -r example; do
-    echo $example
-  done
+  while read project; do
+    echo ${project}
+  done <<< $(find ${THIS_ADDON_PATH}/tests -name addons.make -exec dirname {} \;)
+
 }
 
 
@@ -658,10 +766,11 @@ function list()
 {
   case "$1" in
     examples) shift 1; list_examples "$@" ;;
+    addon_dependencies) shift 1; list_addon_dependencies "$@" ;;
     tests) shift 1; list_tests "$@" ;;
     *)
       echoError " Unknown list target: \"$1\""
-      echoError " valid: examples, tests"
+      echoError " valid: examples, addon_dependencies, tests"
       exit 1 ;;
   esac
   return 0;
@@ -767,14 +876,15 @@ function generate_project()
   fi
 }
 
+
 function generate_examples()
 {
   echoFancy "Generating" "examples"
 
-  find ${THIS_ADDON_PATH}/example* -name addons.make -exec dirname {} \; | while read -r example; do
-      generate_project ${example}
-      echoSuccess "Generated example: ${example#"${THIS_ADDON_PATH}/"}"
-  done
+  while read project; do
+      generate_project ${project}
+      echoSuccess "Generated example: ${project#"${THIS_ADDON_PATH}/"}"
+  done <<< $(find ${THIS_ADDON_PATH}/example* -name addons.make -exec dirname {} \;)
 }
 
 
@@ -782,10 +892,11 @@ function generate_tests()
 {
   echoFancy "Generating" "tests"
 
-  find ${THIS_ADDON_PATH}/tests -name addons.make -exec dirname {} \; | while read -r test; do
-      generate_project ${test}
-      echoSuccess "Generated test: ${test#"${THIS_ADDON_PATH}/"}"
-  done
+  while read project; do
+    generate_project ${project}
+    echoSuccess "Generated example: ${project#"${THIS_ADDON_PATH}/"}"
+  done <<< $(find ${THIS_ADDON_PATH}/tests -name addons.make -exec dirname {} \;)
+
 }
 
 
@@ -810,20 +921,20 @@ function generate()
 
 function build_project()
 {
-  PROJECT_PATH=$1
-  pushd $PROJECT_PATH > /dev/null
+  pushd $1 > /dev/null
   make -j${JOBS} -s
   popd > /dev/null
 }
+
 
 function build_examples()
 {
   echoFancy "Build" "examples"
 
-  find ${THIS_ADDON_PATH}/example* -name addons.make -exec dirname {} \; | while read -r example; do
-      build_project ${example} $@
-      echoSuccess "Built example: ${example#"${THIS_ADDON_PATH}/"}"
-  done
+  while read project; do
+      build_project ${project} $@
+      echoSuccess "Built example: ${project#"${THIS_ADDON_PATH}/"}"
+  done <<< $(find ${THIS_ADDON_PATH}/example* -name addons.make -exec dirname {} \;)
 }
 
 
@@ -831,10 +942,10 @@ function build_tests()
 {
   echoFancy "Build" "tests"
 
-  find ${THIS_ADDON_PATH}/tests -name addons.make -exec dirname {} \; | while read -r test; do
-      build_project ${test} $@
-      echoSuccess "Built test: ${test#"${THIS_ADDON_PATH}/"}"
-  done
+  while read project; do
+      build_project ${project} $@
+      echoSuccess "Built test: ${project#"${THIS_ADDON_PATH}/"}"
+  done <<< $(find ${THIS_ADDON_PATH}/example* -name addons.make -exec dirname {} \;)
 }
 
 
@@ -870,11 +981,10 @@ function run_examples()
 {
   echoFancy "Run" "examples"
 
-  find ${THIS_ADDON_PATH}/example* -name addons.make -exec dirname {} \; | while read -r example; do
+  while read project; do
       run_project ${example} $@
       echoSuccess "Ran example: ${example#"${THIS_ADDON_PATH}/"}"
-  done
-
+  done <<< $(find ${THIS_ADDON_PATH}/example* -name addons.make -exec dirname {} \;)
 }
 
 
@@ -882,10 +992,10 @@ function run_tests()
 {
   echoFancy "Run" "tests"
 
-  find ${THIS_ADDON_PATH}/tests -name addons.make -exec dirname {} \; | while read -r test; do
-      run_project ${test} $@
+  while read project; do
+      run_project ${project} $@
       echoSuccess "Ran test: ${test#"${THIS_ADDON_PATH}/"}"
-  done
+  done <<< $(find ${THIS_ADDON_PATH}/example* -name addons.make -exec dirname {} \;)
 
 }
 
@@ -950,5 +1060,7 @@ case "$A_CMD" in
     echoError " Unknown command \"$A_CMD\""
     exit 1 ;;
 esac
+
+
 
 exit 0
