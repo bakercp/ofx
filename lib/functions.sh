@@ -80,7 +80,7 @@ function clean_project_files()
 
   if [ "${FORCE_CLEAN}" == "true" ]; then
     # Here we force clean the makefiles and config.make.
-    find $1 -maxdepth 1 \
+    find -L $1 -maxdepth 1 \
     \( \
           -name "*.qbs" \
       -o -name "*.xcodeproj" \
@@ -92,7 +92,7 @@ function clean_project_files()
     \) \
     -exec rm -rf {} \;
   else
-    find $1 -maxdepth 1 \
+    find -L $1 -maxdepth 1 \
     \( \
           -name "*.qbs" \
       -o -name "*.xcodeproj" \
@@ -122,25 +122,25 @@ function clean_project_build_files()
   fi
 
   # QTCreatorBuild paths
-  find $1 -maxdepth 1 \( \
+  find -L $1 -maxdepth 1 \( \
       -type d -a \
       -name "build-example*" \
     \)  -exec rm -rf {} \;
 
-  find $1 -maxdepth 1 \( \
+  find -L $1 -maxdepth 1 \( \
         -type d -a \
         -name "_obj*" \
     \)  -exec rm -rf {} \;
 
   # Project build files
-  find $1 -maxdepth 1 \( \
+  find -L $1 -maxdepth 1 \( \
       -type d -a \
       -name "obj" \
     \)  -exec rm -rf {} \;
 
   if [ -d $1/bin ] ; then
     # Project app files
-    find $1/bin -maxdepth 1 \( \
+    find -L $1/bin -maxdepth 1 \( \
         -name "*.app" \
       -o -name "*.app.dSYM" \
       -o -name "PkgInfo" \
@@ -159,7 +159,7 @@ function clean_project_build_files()
 # \returns 0 exit code on success.
 function find_projects()
 {
-  echo $(find $1 -name addons.make -exec dirname {} \;)
+  echo $(find -L $1 -name addons.make -exec dirname {} \;)
   return 0
 }
 

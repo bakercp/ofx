@@ -120,9 +120,9 @@ function generate_project()
 function get_addon_dependencies_from_all_examples()
 {
   local ADDON_DEPENDENCIES=""
-  while read project; do
+  for project in $(find -L ${EXAMPLE_PROJECTS} -name addons.make -exec dirname {} \;); do
     ADDON_DEPENDENCIES="${ADDON_DEPENDENCIES} $(get_addon_dependencies_for_project "${project}")"
-  done <<< $(find ${EXAMPLE_PROJECTS} -name addons.make -exec dirname {} \;)
+  done
   echo $(sort_and_remove_duplicates "${ADDON_DEPENDENCIES}")
   return 0
 }
@@ -131,9 +131,9 @@ function get_addon_dependencies_from_all_examples()
 function get_addon_dependencies_from_all_tests()
 {
   local ADDON_DEPENDENCIES=""
-  while read project; do
+  for project in $(find -L ${TEST_PROJECTS} -name addons.make -exec dirname {} \;); do
     ADDON_DEPENDENCIES="${ADDON_DEPENDENCIES} $(get_addon_dependencies_for_project "${project}")"
-  done <<< $(find ${TEST_PROJECTS} -name addons.make -exec dirname {} \;)
+  done
   echo $(sort_and_remove_duplicates "${ADDON_DEPENDENCIES}")
   return 0
 }
