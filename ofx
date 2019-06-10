@@ -618,7 +618,7 @@ function ci()
       install_openframeworks ${OF_ROOT}
 
       # Link this addon to the OF_ROOT/addons folder.
-      if [ -L ${THIS_ADDON_PATH} ] && [ -e ${THIS_ADDON_PATH} ]; then 
+      if [ ! -L ${THIS_ADDON_PATH} ]; then 
         ln -s ${TRAVIS_BUILD_DIR} ${THIS_ADDON_PATH}
       fi
     fi
