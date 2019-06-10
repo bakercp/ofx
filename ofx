@@ -11,10 +11,7 @@ set -o errexit   # set -e : exit the script if any statement returns a non-true 
 DEFAULT_CLONE_DEPTH=1
 # export MAKEFLAGS="-s"
 
-
-JOBS=1
-# $(nproc --ignore=1)
-# sysctl -n hw.ncpu
+JOBS=$(get_max_number_of_jobs)
 
 # Is verbose?
 _VERBOSE=0

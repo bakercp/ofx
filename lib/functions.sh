@@ -47,7 +47,7 @@ function os()
   return 0
 }
 
-
+# via https://stackoverflow.com/a/24848739/1518329
 function relpath()
 {
   b=""
@@ -58,53 +58,26 @@ function relpath()
   b="../${b}"; 
   done; 
   echo ${b}${d#$s/}
-
-  # # both $1 and $2 are absolute paths beginning with /
-  # # returns relative path to $2/$target from $1/$source
-  # source=(readlink -f $1)
-  # target=(readlink -f $2)
-
-  # common_part=$source # for now
-  # result="" # for now
-
-  # while [[ "${target#$common_part}" == "${target}" ]]; do
-  #     # no match, means that candidate common part is not correct
-  #     # go up one level (reduce common part)
-  #     common_part="$(dirname $common_part)"
-  #     # and record that we went back, with correct / handling
-  #     if [[ -z $result ]]; then
-  #         result=".."
-  #     else
-  #         result="../$result"
-  #     fi
-  # done
-
-  # if [[ $common_part == "/" ]]; then
-  #     # special case for root (no common path)
-  #     result="$result/"
-  # fi
-
-  # # since we now have identified the common part,
-  # # compute the non-common part
-  # forward_part="${target#$common_part}"
-
-  # # and now stick all parts together
-  # if [[ -n $result ]] && [[ -n $forward_part ]]; then
-  #     result="$result$forward_part"
-  # elif [[ -n $forward_part ]]; then
-  #     # extra slash removal
-  #     result="${forward_part:1}"
-  # fi
-
-  # echo $result
 }
 
-# function num_jobs()
-# {
-#   local _os=$(os)
+function get_max_number_of_jobs()
+{
+  local host_os=$(os)
+  
+  local n_processors=1
 
-# }
+  if [ "${host_os}" == "osx" ]; then
+    n_processors=$(sysctl -n hw.ncpu)
+  else 
+    n_processors=$(nproc)
+  fi
 
+  if [ "$(host_os)" == "linuxarmv6l" ] || [ "$(host_os)" == "linuxarmv7l" ]; then 
+    n_processors = $((n_processors-1))
+  done 
+
+  echo ${n_processors}
+}
 
 # \brief Get the openFrameworks name of the host operating system.
 # \param $1 The space-delimited string to de-duplicated and sort.
