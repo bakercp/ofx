@@ -11,7 +11,10 @@ set -o errexit   # set -e : exit the script if any statement returns a non-true 
 DEFAULT_CLONE_DEPTH=1
 # export MAKEFLAGS="-s"
 
-JOBS=$(nproc --ignore=1)
+
+JOBS=1
+# $(nproc --ignore=1)
+# sysctl -n hw.ncpu
 
 # Is verbose?
 _VERBOSE=0
@@ -236,6 +239,7 @@ if [ $_VERBOSE == 1 ]; then
 fi
 
 # Include the Helpers.
+source "$( dirname "${BASH_SOURCE[0]}" )/lib/openframeworks_helper.sh"
 source "$( dirname "${BASH_SOURCE[0]}" )/lib/apothecary_helper.sh"
 source "$( dirname "${BASH_SOURCE[0]}" )/lib/project_helper.sh"
 source "$( dirname "${BASH_SOURCE[0]}" )/lib/dependency_helper.sh"
@@ -250,7 +254,12 @@ function clone_addons()
       echoInfo "Installing: ${OF_ADDONS_PATH}/${addon}"
       git clone --quiet --depth=${ADDON_CLONE_DEPTH} -b ${ADDON_CLONE_BRANCH} https://github.com/${ADDON_CLONE_USERNAME}/${addon}.git ${OF_ADDONS_PATH}/${addon}
 
-      # TODO, bootstrap this addon if freshly cloned.
+      # Bootstrap addon if needed.
+      pushd ${OF_ADDONS_PATH}/${addon} > /dev/null
+      if [ -f scripts/boostrap.sh ]; then
+        /usr/bin/env bash scripts/boostrap.sh
+      fi
+      popd > /dev/null
 
       local _REQUIRED_ADDONS=$(get_addon_dependencies_for_addon ${OF_ADDONS_PATH}/${addon})
 
@@ -336,7 +345,6 @@ function get_all_addon_dependencies()
   echo $(sort_and_remove_duplicates "$(get_addon_dependencies_from_addon_config_mk) $(get_addon_dependencies_from_all_projects)")
   return 0
 }
-
 
 
 function install_dependencies()
@@ -488,12 +496,13 @@ function install()
     apothecary) shift 1; install_apothecary "$@" ;;
     dependencies) shift 1; install_dependencies "$@" ;;
     libraries) shift 1; install_libraries "$@" ;;
+    openframeworks) shift 1; install_openframeworks "$@" ;;
     shared_data) shift 1; install_shared_data "$@" ;;
     example_data) shift 1; install_example_data "$@" ;;
     test_data) shift 1; install_test_data "$@" ;;
     *)
       echoError " Unknown install target: \"$1\""
-      echoError " valid: apothecary, dependencies, libraries, shared_data, example_data test_data"
+      echoError " valid: apothecary, dependencies, libraries, openframeworks, shared_data, example_data test_data"
       exit 1;;
   esac
 }
@@ -597,6 +606,13 @@ function bootstrap()
   echo -e "\tcomputer by means of a few initial instructions that enable "
   echo -e "\tthe introduction of the rest of the program from an input"
   echo -e "\tdevice.\"\n"
+
+
+  if [ "${_CI}" == "true" ]; then
+    if [ "${_TRAVIS}" == "true"]; then
+      install_openframeworks ~
+    fi
+  fi 
 
   install_apothecary
   install_libraries

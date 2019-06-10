@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Included by ofx
+# Included by ../ofx
 
 function clean_apothecary()
 {

@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+
+# Included by ../ofx
+
+
 EXAMPLE_PROJECTS=${THIS_ADDON_PATH}/example*
 TEST_PROJECTS=${THIS_ADDON_PATH}/tests
 ALL_PROJECTS=${THIS_ADDON_PATH}
