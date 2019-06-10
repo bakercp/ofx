@@ -12,7 +12,7 @@ function install_openframeworks()
 
         # Undo this https://github.com/openframeworks/openFrameworks/blob/master/scripts/ci/addons/install.sh#L39 
         # because we use a symlink.
-        mv ${OF_ADDON_PATH} ${TRAVIS_BUILD_DIR}
+        mv ${THIS_ADDON_PATH} ${TRAVIS_BUILD_DIR}
 
         popd > /dev/null
     else 
