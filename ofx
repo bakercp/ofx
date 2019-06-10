@@ -610,11 +610,12 @@ function ci()
 {
   echoFancy "Continuous Integration" "${THIS_ADDON_NAME}"
 
+  # Check to see if we are running in a CI server / environment.
   if [ "${_CI}" == "true" ]; then
     if [ "${_TRAVIS}" == "true" ]; then
 
-      # Install openFrameworks @ 
-      install_openframeworks ${OF_ROOT}/..
+      # Install openFrameworks so that it matches with $OF_ROOT
+      install_openframeworks ${OF_ROOT}
 
       # Link this addon to the OF_ROOT/addons folder.
       if [ -L ${THIS_ADDON_PATH} ] && [ -e ${THIS_ADDON_PATH} ]; then 
