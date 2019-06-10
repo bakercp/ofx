@@ -11,8 +11,6 @@ set -o errexit   # set -e : exit the script if any statement returns a non-true 
 DEFAULT_CLONE_DEPTH=1
 # export MAKEFLAGS="-s"
 
-JOBS=$(get_max_number_of_jobs)
-
 # Is verbose?
 _VERBOSE=0
 
@@ -62,6 +60,8 @@ echoFancy() { echo -e "💪  ${1} $CON_YELLOW_UNDERLINE${2}$CON_DEFAULT ..."; }
 
 # Include the Functions.
 source "$( dirname "${BASH_SOURCE[0]}" )/lib/functions.sh"
+
+JOBS=$(get_max_number_of_jobs)
 
 # Tutorial: https://wiki.bash-hackers.org/howto/getopts_tutorial
 
