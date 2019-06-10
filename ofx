@@ -609,7 +609,7 @@ function bootstrap()
 
 
   if [ "${_CI}" == "true" ]; then
-    if [ "${_TRAVIS}" == "true"]; then
+    if [ "${_TRAVIS}" == "true" ]; then
       install_openframeworks ~
     fi
   fi 
