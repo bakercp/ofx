@@ -311,6 +311,7 @@ function get_addon_dependencies_from_project()
   return 0
 }
 
+
 function get_addon_dependencies_from_all_examples()
 {
   local ADDON_DEPENDENCIES=""
@@ -607,13 +608,10 @@ function bootstrap()
   echo -e "\tthe introduction of the rest of the program from an input"
   echo -e "\tdevice.\"\n"
 
-
   if [ "${_CI}" == "true" ]; then
     if [ "${_TRAVIS}" == "true" ]; then
       install_openframeworks ~
-      mv ${TRAVIS_BUILD_DIR} ${OF_ADDONS_PATH}/
-
-      
+      ln -s ${TRAVIS_BUILD_DIR} ${THIS_ADDON_PATH}
     fi
   fi 
 
