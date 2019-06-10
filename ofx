@@ -303,10 +303,6 @@ function get_addon_dependencies_from_addon_config_mk()
 # Extract ADDON_DEPENDENCIES from an project's addons.make files.
 function get_addon_dependencies_from_project()
 {
-  echo "-----------"
-  ls -la ${THIS_ADDON_PATH}
-  echo "_get_addon_dependencies_from_project >$@<"
-  echo "-----------"
   local ADDON_DEPENDENCIES=""
   while read addon; do
     ADDON_DEPENDENCIES="${ADDON_DEPENDENCIES} ${addon}"
