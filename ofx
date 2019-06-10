@@ -317,7 +317,7 @@ function get_addon_dependencies_from_all_examples()
   local ADDON_DEPENDENCIES=""
   while read project; do
     ADDON_DEPENDENCIES="${ADDON_DEPENDENCIES} $(get_addon_dependencies_from_project "${project}")"
-  done <<< $(find ${THIS_ADDON_PATH}/example* -name addons.make -exec dirname {} \;)
+  done <<< $(find -L ${THIS_ADDON_PATH}/example* -name addons.make -exec dirname {} \;)
   echo $(sort_and_remove_duplicates "${ADDON_DEPENDENCIES}")
   return 0
 }
@@ -328,7 +328,7 @@ function get_addon_dependencies_from_all_tests()
   local ADDON_DEPENDENCIES=""
   while read project; do
     ADDON_DEPENDENCIES="${ADDON_DEPENDENCIES} $(get_addon_dependencies_from_project "${project}")"
-  done <<< $(find ${THIS_ADDON_PATH}/tests -name addons.make -exec dirname {} \;)
+  done <<< $(find -L ${THIS_ADDON_PATH}/tests -name addons.make -exec dirname {} \;)
   echo $(sort_and_remove_duplicates "${ADDON_DEPENDENCIES}")
   return 0
 }
@@ -360,7 +360,7 @@ function install_shared_data()
   echoFancy "Installing" "shared data"
 
   if [ -d ${THIS_ADDON_SHARED_DATA_PATH} ] ; then
-    SHARED_DATA_SCRIPTS=$(find ${THIS_ADDON_SHARED_DATA_PATH} -name *.sh)
+    SHARED_DATA_SCRIPTS=$(find -L ${THIS_ADDON_SHARED_DATA_PATH} -name *.sh)
     for script in ${SHARED_DATA_SCRIPTS}; do
       /usr/bin/env bash ${script}
     done
@@ -374,7 +374,7 @@ function install_data_for_project()
     local did_install=false
     if [ -d ${PROJECT_PATH}/bin/data ] ; then
 
-      DATA_FILES=$(find ${PROJECT_PATH}/bin/data -name data.txt)
+      DATA_FILES=$(find -L ${PROJECT_PATH}/bin/data -name data.txt)
       for data_file in ${DATA_FILES}
       do
         did_install=true
