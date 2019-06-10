@@ -74,7 +74,7 @@ function get_max_number_of_jobs()
 
   if [ "$(host_os)" == "linuxarmv6l" ] || [ "$(host_os)" == "linuxarmv7l" ]; then 
     n_processors = $((n_processors-1))
-  done 
+  fi 
 
   echo ${n_processors}
 }
