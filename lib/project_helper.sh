@@ -80,6 +80,17 @@ function generate_project()
   TEMPLATE_MAKEFILE=${OF_SCRIPTS_PATH}/templates/${HOST_PLATFORM}/Makefile
   TEMPLATE_CONFIG_MAKE=${OF_SCRIPTS_PATH}/templates/${HOST_PLATFORM}/config.make
 
+  if [ $_VERBOSE == 1 ]; then
+    echo "================================================================================"
+    echo ""
+    echo "                         PROJECT_MAKEFILE: ${PROJECT_MAKEFILE}"
+    echo "                      PROJECT_CONFIG_MAKE: ${PROJECT_CONFIG_MAKE}"
+    echo "                       TEMPLATE_MAKEFILE: ${TEMPLATE_MAKEFILE}"
+    echo "                    TEMPLATE_CONFIG_MAKE: ${TEMPLATE_CONFIG_MAKE}"
+    echo ""
+    echo "================================================================================"
+  fi
+
   if [ ${OF_PROJECT_GENERATOR_AVAILABLE} == true ]; then
     if [ -f ${PROJECT_MAKEFILE} ]; then
       echoWarning "Removing and regenerating ${PROJECT_MAKEFILE} because of https://github.com/openframeworks/projectGenerator/issues/210."
