@@ -245,7 +245,20 @@ function get_addon_dependencies_for_project()
 
 function build_project()
 {
-  pushd $1 > /dev/null
+  PROJECT_PATH=$1
+
+  echo "---"
+
+  pushd $PROJECT_PATH > /dev/null
+
+  echo "BUILDING PROJECT"
+  pwd
+  ls -la
+  echo ${PROJECT_PATH}
+  echo ${JOBS}
+  echo ${OF_ROOT}
+  cat Makefile
+
   make -j${JOBS} -s
   popd > /dev/null
 }
@@ -256,14 +269,19 @@ function run_project()
 
   PROJECT_PATH=$1
 
+  echo "---"
+
+  pushd $PROJECT_PATH > /dev/null
+
   echo "RUNNING PROJECT"
   pwd
+  ls -la
   echo ${PROJECT_PATH}
   echo ${JOBS}
   echo ${OF_ROOT}
   cat Makefile
-  echo "---"
-  pushd $PROJECT_PATH > /dev/null
+
+
   make -j${JOBS} -s run
   popd > /dev/null
 }
