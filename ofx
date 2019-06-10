@@ -23,7 +23,7 @@ HELP="usage: ofx [options] <command> [command parameters]
 about:
  This is ofx, the openFrameworks addons multi-tool.
 commands:
-  bootstrap clean generate install list
+  ci bootstrap clean generate install list run
 options:
   -j The number of jobs (cores) used when compiling (default: 1).
   -t The target platform.
