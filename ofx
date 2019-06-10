@@ -86,7 +86,7 @@ shift "$((OPTIND-1))"
 
 # Get command.
 if [ $# -gt 0 ] ; then
-  A_CMD=$1
+  A_CMD="$1"
 else
   echoWarning "Missing command. See help: '$0 -h'."
   exit 1
@@ -303,10 +303,11 @@ function get_addon_dependencies_from_addon_config_mk()
 # Extract ADDON_DEPENDENCIES from an project's addons.make files.
 function get_addon_dependencies_from_project()
 {
+  echo "get_addon_dependencies_from_project >$@<"
   local ADDON_DEPENDENCIES=""
   while read addon; do
     ADDON_DEPENDENCIES="${ADDON_DEPENDENCIES} ${addon}"
-  done < $1/addons.make
+  done < "${1}"/addons.make
   echo $(sort_and_remove_duplicates "${ADDON_DEPENDENCIES}")
   return 0
 }
@@ -370,7 +371,7 @@ function install_shared_data()
 
 function install_data_for_project()
 {
-    local PROJECT_PATH=$1
+    local PROJECT_PATH="$1"
     local did_install=false
     if [ -d ${PROJECT_PATH}/bin/data ] ; then
 
