@@ -73,6 +73,8 @@ function generate_project()
 {
   local PROJECT_PATH=$1
 
+  echoInfo "Generating project files for ${PROJECT_PATH}"
+
   PROJECT_MAKEFILE=${PROJECT_PATH}/Makefile
   PROJECT_CONFIG_MAKE=${PROJECT_PATH}/config.make
   TEMPLATE_MAKEFILE=${OF_SCRIPTS_PATH}/templates/${HOST_PLATFORM}/Makefile
@@ -94,8 +96,6 @@ function generate_project()
     echoWarning "Project Generator is not available, creating makefiles."
 
     PROJECT_PATH_RELATIVE_OF_ROOT=$(relpath "${PROJECT_PATH}/.." "${OF_ROOT}")
-
-    # PROJECT_PATH_RELATIVE_OF_ROOT=$(realpath --relative-to="${PROJECT_PATH}/.." "${OF_ROOT}")
 
     if ! [ -f ${PROJECT_MAKEFILE} ]; then
       cp ${TEMPLATE_MAKEFILE} ${PROJECT_PATH}
