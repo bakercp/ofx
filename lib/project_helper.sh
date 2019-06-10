@@ -106,7 +106,7 @@ function generate_project()
   elif [ "${HOST_PLATFORM}" == "${TARGET_PLATFORM}" ] ; then
     echoWarning "Project Generator is not available, creating makefiles."
 
-    PROJECT_PATH_RELATIVE_OF_ROOT=$(relpath "${PROJECT_PATH}/.." "${OF_ROOT}")
+    PROJECT_PATH_RELATIVE_OF_ROOT=$(relpath "${OF_ROOT}" "${PROJECT_PATH}/..")
 
     if ! [ -f ${PROJECT_MAKEFILE} ]; then
       cp ${TEMPLATE_MAKEFILE} ${PROJECT_PATH}
