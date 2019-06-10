@@ -253,7 +253,16 @@ function build_project()
 
 function run_project()
 {
+
   PROJECT_PATH=$1
+
+  echo "RUNNING PROJECT"
+  pwd
+  echo ${PROJECT_PATH}
+  echo ${JOBS}
+  echo ${OF_ROOT}
+  cat Makefile
+  echo "---"
   pushd $PROJECT_PATH > /dev/null
   make -j${JOBS} -s run
   popd > /dev/null
