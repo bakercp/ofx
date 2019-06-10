@@ -624,8 +624,16 @@ function ci()
     fi
   fi 
 
+  # Run bootstrap (see above).
   bootstrap
+
+  # Generate all project files, overwrite any that are already there.
   generate_all "force"
+
+  # Build all projects, including examples.
+  build_all
+
+  # Run tests, but not examples as many examples require a window.
   run_tests
 }
 
