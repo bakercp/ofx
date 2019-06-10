@@ -601,13 +601,6 @@ function bootstrap()
   echo -e "\tthe introduction of the rest of the program from an input"
   echo -e "\tdevice.\"\n"
 
-  if [ "${_CI}" == "true" ]; then
-    if [ "${_TRAVIS}" == "true" ]; then
-      install_openframeworks ~
-      ln -s ${TRAVIS_BUILD_DIR} ${THIS_ADDON_PATH}
-    fi
-  fi 
-
   install_apothecary
   install_libraries
   install_dependencies
