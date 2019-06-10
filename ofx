@@ -132,7 +132,6 @@ if [ ! -z ${_CI} ] && [ "$_CI" == "true" ]; then
     THIS_ADDON_NAME=${TRAVIS_REPO_SLUG#*/}
     THIS_USERNAME=${TRAVIS_REPO_SLUG%/*}
     THIS_BRANCH=${TRAVIS_BRANCH}
-    THIS_ADDON_PATH=${TRAVIS_BUILD_DIR}
   fi
 else
   if [ "$IS_LOCAL_ADDON" == "true" ]; then
@@ -612,6 +611,9 @@ function bootstrap()
   if [ "${_CI}" == "true" ]; then
     if [ "${_TRAVIS}" == "true" ]; then
       install_openframeworks ~
+      mv ${TRAVIS_BUILD_DIR} ${OF_ADDONS_PATH}/
+
+      
     fi
   fi 
 
