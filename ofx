@@ -132,6 +132,7 @@ if [ ! -z ${_CI} ] && [ "$_CI" == "true" ]; then
     THIS_ADDON_NAME=${TRAVIS_REPO_SLUG#*/}
     THIS_USERNAME=${TRAVIS_REPO_SLUG%/*}
     THIS_BRANCH=${TRAVIS_BRANCH}
+    THIS_ADDON_PATH=${TRAVIS_BUILD_DIR}
   fi
 else
   if [ "$IS_LOCAL_ADDON" == "true" ]; then
