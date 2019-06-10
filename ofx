@@ -95,7 +95,7 @@ fi
 shift 1
 
 # Some commands don't require targets.
-if ! [ "$A_CMD" == "bootstrap" ]; then
+if ! [ "$A_CMD" == "bootstrap" ] && ! [ "${A_CMD}" == "ci" ]; then
   # check for arguments
   if [ $# -lt 1 ] ; then
     echoError " Missing command target. See help: 'ofx -h'."
@@ -499,6 +499,13 @@ function generate_tests()
 }
 
 
+function generate_all()
+{
+  (generate_examples $@)
+  (generate_tests $@)
+}
+
+
 function generate()
 {
   case "$1" in
@@ -602,10 +609,29 @@ function bootstrap()
 }
 
 
+function ci()
+{
+  echoFancy "Continuous Integration" "${THIS_ADDON_NAME}"
+
+  if [ "${_CI}" == "true" ]; then
+    if [ "${_TRAVIS}" == "true" ]; then
+      install_openframeworks ~
+      ln -s ${TRAVIS_BUILD_DIR} ${THIS_ADDON_PATH}
+    fi
+  fi 
+
+  bootstrap
+  generate_all "force"
+  run_tests
+}
+
+
 # handle commands
 echoVerbose "Running: $A_CMD $*"
 case "$A_CMD" in
 
+  ci)
+    ci "$@" ;;
   clean)
     clean "$@" ;;
   install)
