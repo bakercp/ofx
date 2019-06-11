@@ -660,7 +660,7 @@ function ci()
       ;;
     script) 
       shift 1
-      ci_install "$@" 
+      ci_script "$@" 
       ;;
     *)
       echoError " Unknown ci target: \"$1\""
