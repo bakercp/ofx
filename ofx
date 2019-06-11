@@ -92,7 +92,7 @@ fi
 shift 1
 
 # Some commands don't require targets.
-if ! [ "$A_CMD" == "bootstrap" ] && ! [ "${A_CMD}" == "ci" ]; then
+if ! [ "$A_CMD" == "bootstrap" ]; then
   # check for arguments
   if [ $# -lt 1 ] ; then
     echoError " Missing command target. See help: 'ofx -h'."
@@ -606,24 +606,38 @@ function bootstrap()
 }
 
 
-function ci()
+function ci_install()
 {
-  echoFancy "Continuous Integration" "${THIS_ADDON_NAME}"
+    echoFancy "CI" "Install"
 
   # Check to see if we are running in a CI server / environment.
   if [ "${_CI}" == "true" ]; then
     if [ "${_TRAVIS}" == "true" ]; then
 
-      # Install openFrameworks so that it matches with $OF_ROOT
-      install_openframeworks ${OF_ROOT}
+      echoFancy "Installing" "openFrameworks"
+      if [ ! -d ${OF_ROOT} ]; then
+          git clone --depth=${OF_CLONE_DEPTH} --branch=${OF_CLONE_BRANCH} https://github.com/${OF_CLONE_USERNAME}/openFrameworks.git ${OF_ROOT}
+          pushd ${OF_ROOT} > /dev/null
+          scripts/ci/addons/install.sh
 
-      # Link this addon to the OF_ROOT/addons folder.
-      if [ ! -L ${THIS_ADDON_PATH} ]; then 
-        ln -s ${TRAVIS_BUILD_DIR} ${THIS_ADDON_PATH}
+          # After this, the cloned addon will be in $THIS_ADDON_PATH, so make a link.
+          if [ ! -L ${THIS_ADDON_PATH} ]; then 
+            ln -s ${THIS_ADDON_PATH} ${TRAVIS_BUILD_DIR}
+          fi
+
+          popd > /dev/null
+      else 
+          echoWarning "${OF_ROOT} already exists"
       fi
     fi
   fi 
 
+
+}
+
+
+function ci_script()
+{
   # Run bootstrap (see above).
   bootstrap
 
@@ -635,6 +649,25 @@ function ci()
 
   # Run tests, but not examples as many examples require a window.
   run_tests
+}
+
+
+function ci()
+{
+  case "$1" in
+    install)
+      shift 1
+      run_all "$@"
+      ;;
+    script) 
+      shift 1
+      ci_install "$@" 
+      ;;
+    *)
+      echoError " Unknown ci target: \"$1\""
+      echoError " valid: install, script"
+      exit 1;;
+  esac
 }
 
 
