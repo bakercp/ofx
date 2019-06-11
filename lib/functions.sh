@@ -65,7 +65,7 @@ function get_max_number_of_jobs()
     n_processors=$(nproc)
   fi
 
-  if [ "$(host_os)" == "linuxarmv6l" ] || [ "$(host_os)" == "linuxarmv7l" ]; then 
+  if [ "${host_os}" == "linuxarmv6l" ] || [ "${host_os}" == "linuxarmv7l" ]; then 
     n_processors = $((n_processors-1))
   fi 
 

@@ -607,7 +607,7 @@ function bootstrap()
 
 function ci_install()
 {
-    echoFancy "CI" "Install"
+  echoFancy "CI" "Install"
 
   # Check to see if we are running in a CI server / environment.
   if [ "${_CI}" == "true" ]; then
@@ -637,6 +637,8 @@ function ci_install()
 
 function ci_script()
 {
+  echoFancy "CI" "Run"
+
   # Run bootstrap (see above).
   bootstrap
 
@@ -656,7 +658,7 @@ function ci()
   case "$1" in
     install)
       shift 1
-      run_all "$@"
+      ci_install "$@"
       ;;
     script) 
       shift 1
