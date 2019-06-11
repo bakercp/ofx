@@ -81,6 +81,13 @@ while getopts j:p:t:o:hv opt ; do
 done
 shift "$((OPTIND-1))"
 
+# Get the last argument (which must start with ofx or be a path to a folder that starts with ofx)
+for arg in $@; do :; done
+WORKING_ADDON_PATH=${arg}
+
+# Remove the last argument.
+set -- "${@:1:$(($#-1))}"
+
 # Get command.
 if [ $# -gt 0 ] ; then
   A_CMD="$1"
@@ -104,21 +111,26 @@ fi
 HOST_PLATFORM=${HOST_PLATFORM:-$(os)}
 TARGET_PLATFORM=${TARGET_PLATFORM:-$(os)}
 
-# Account for local addons.
-IS_LOCAL_ADDON=false
 
-ADDON_PARENT_DIRECTORY=$(basename "$(cd "$( dirname "${BASH_SOURCE[0]}" )/../../.." && pwd)")
-if [ "${ADDON_PARENT_DIRECTORY}" == "local_addons" ]; then
-  THIS_ADDON_PATH=$(cd "$( dirname "${BASH_SOURCE[0]}" )/../.." && pwd)
-  IS_LOCAL_ADDON=true
-fi
+# # TODO: do we want to be this strict?
+# if [[ ${WORKING_ADDON_PATH##*/} != ofx* ]]; then 
+#   echoError "Addon name does not begin with \"ofx\"."
+#   exit 1
+# fi
+
+# if [ ! -d $(get_abs_filename $WORKING_ADDON) ]; then 
+#   echoError "The addon path does not exist."
+#   exit 1
+# fi
+
 
 # Set defaults based on environment.
 _CI=${CI:-}
 _APPVEYOR=${APPVEYOR:-}
 _TRAVIS=${TRAVIS:-}
 
-# This script should live in the scripts directory of the addon.
+IS_LOCAL_ADDON=false
+
 if [ ! -z ${_CI} ] && [ "$_CI" == "true" ]; then
   OF_ROOT=${OF_ROOT:-~/openFrameworks}
   if [ ! -z ${_APPVEYOR} ] && [ "$_APPVEYOR" == "true" ]; then
@@ -131,20 +143,23 @@ if [ ! -z ${_CI} ] && [ "$_CI" == "true" ]; then
     THIS_BRANCH=${TRAVIS_BRANCH}
   fi
 else
-  if [ "$IS_LOCAL_ADDON" == "true" ]; then
-    OF_ROOT=${OF_ROOT:-$(cd "$( dirname "${BASH_SOURCE[0]}" )/../../../../../../../" && pwd)}
-  else
-    OF_ROOT=${OF_ROOT:-$(cd "$( dirname "${BASH_SOURCE[0]}" )/../../../../" && pwd)}
-  fi
-  THIS_ADDON_NAME=$(basename "$(cd "$( dirname "${BASH_SOURCE[0]}" )/../.."  && pwd)")
+  OF_ROOT=${OF_ROOT:-$(cd "$( dirname "${BASH_SOURCE[0]}" )/../../" && pwd)}
+  
+  WORKING_ADDON_PATH_ABS=$(get_abs_filename ${WORKING_ADDON_PATH})
+  THIS_ADDON_NAME=${WORKING_ADDON_PATH_ABS##*/}
   THIS_USERNAME=$(whoami)
   THIS_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-fi
 
-# Account for local addons.
-ADDON_PARENT_DIRECTORY=$(basename "$(cd "$( dirname "${BASH_SOURCE[0]}" )/../../.." && pwd)")
-if [ "${ADDON_PARENT_DIRECTORY}" == "local_addons" ]; then
-  THIS_ADDON_PATH=$(cd "$( dirname "${BASH_SOURCE[0]}" )/../.." && pwd)
+  if [ -d ${WORKING_ADDON_PATH_ABS} ]; then 
+    ADDON_PARENT_DIRECTORY=$(basename "$(cd "$( dirname "${WORKING_ADDON_PATH_ABS}" )" && pwd)")
+    if [ "${ADDON_PARENT_DIRECTORY}" == "local_addons" ]; then 
+      THIS_ADDON_PATH=${WORKING_ADDON_PATH_ABS}
+      IS_LOCAL_ADDON=true
+    fi  
+  elif [[ ${WORKING_ADDON_PATH} != ofx* ]]; then
+    echoError "Unable to resolve addon: ${WORKING_ADDON_PATH}"
+    exit 1
+  fi 
 fi
 
 # OF paths.

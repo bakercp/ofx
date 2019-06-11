@@ -47,6 +47,21 @@ function os()
   return 0
 }
 
+
+# https://stackoverflow.com/a/21188136/1518329
+get_abs_filename() {
+  # $1 : relative filename
+  filename=$1
+  parentdir=$(dirname "${filename}")
+
+  if [ -d "${filename}" ]; then
+    echo "$(cd "${filename}" && pwd)"
+  elif [ -d "${parentdir}" ]; then
+    echo "$(cd "${parentdir}" && pwd)/$(basename "${filename}")"
+  fi
+}
+
+
 # via https://stackoverflow.com/a/24848739/1518329
 function relpath()
 {
@@ -238,20 +253,7 @@ function get_addon_dependencies_for_project()
 
 function build_project()
 {
-  PROJECT_PATH=$1
-
-  echo "---"
-
-  pushd $PROJECT_PATH > /dev/null
-
-  echo "BUILDING PROJECT"
-  pwd
-  ls -la
-  echo ${PROJECT_PATH}
-  echo ${JOBS}
-  echo ${OF_ROOT}
-  cat Makefile
-
+  pushd $1 > /dev/null
   make -j${JOBS} -s
   popd > /dev/null
 }
@@ -259,22 +261,7 @@ function build_project()
 
 function run_project()
 {
-
-  PROJECT_PATH=$1
-
-  echo "---"
-
-  pushd $PROJECT_PATH > /dev/null
-
-  echo "RUNNING PROJECT"
-  pwd
-  ls -la
-  echo ${PROJECT_PATH}
-  echo ${JOBS}
-  echo ${OF_ROOT}
-  cat Makefile
-
-
+  pushd $1 > /dev/null
   make -j${JOBS} -s run
   popd > /dev/null
 }
