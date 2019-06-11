@@ -236,7 +236,6 @@ if [ $_VERBOSE == 1 ]; then
 fi
 
 # Include the Helpers.
-source "$( dirname "${BASH_SOURCE[0]}" )/lib/openframeworks_helper.sh"
 source "$( dirname "${BASH_SOURCE[0]}" )/lib/apothecary_helper.sh"
 source "$( dirname "${BASH_SOURCE[0]}" )/lib/project_helper.sh"
 source "$( dirname "${BASH_SOURCE[0]}" )/lib/dependency_helper.sh"
