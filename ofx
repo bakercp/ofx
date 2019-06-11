@@ -602,6 +602,7 @@ function bootstrap()
   install_shared_data
   install_example_data
   install_test_data
+  generate_all "force"
 }
 
 
@@ -641,9 +642,6 @@ function ci_script()
 
   # Run bootstrap (see above).
   bootstrap
-
-  # Generate all project files, overwrite any that are already there.
-  generate_all "force"
 
   # Build all projects, including examples.
   build_all
