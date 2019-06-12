@@ -313,7 +313,7 @@ function clone_addons()
             exit 1
           fi
         fi
-      if
+      fi
 
       popd > /dev/null
 
