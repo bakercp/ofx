@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
+#
+# Copyright (c) 2019 Christopher Baker <https://christopherbaker.net>
+#
+# SPDX-License-Identifier:	MIT
+#
+
 set -e
 
 #set -x # run script in debug mode
@@ -10,25 +16,6 @@ set -o errexit   # set -e : exit the script if any statement returns a non-true 
 # Helpful env variables.
 DEFAULT_CLONE_DEPTH=1
 # export MAKEFLAGS="-s"
-
-# Is verbose?
-_VERBOSE=0
-
-HELP="usage: ofx [options] <command> [command parameters]
-about:
- This is ofx, the openFrameworks addons multi-tool.
-commands:
-  ci bootstrap clean generate install list run
-options:
-  -j The number of jobs (cores) used when compiling (default: 1).
-  -t The target platform.
-  -p The Project Generator command-line app path.
-  -o The openFrameworks root path.
-  -h or -? Print this usage guide.
-  -v Verbose Mode.
-examples:
-  ./ofx bootstrap
-"
 
 # Trap the killer signals so that we can exit with a good message
 trap "trapSignal SIGHUP" SIGHUP
@@ -42,26 +29,94 @@ trap "trapError" ERR
 
 trapError() { echo; echoError " ^ Received error ^"; exit 1; }
 
-# ANSI console escape codes.
-CON_DEFAULT="\033[0m"
-CON_BOLD="\033[1m"
-CON_RED="\033[31m"
-CON_YELLOW="\033[33m"
-CON_GREEN="\033[32m"
-CON_YELLOW_UNDERLINE="\033[33;1;4m"
-
-# Console printing functions (with color)
-echoError()   { echo -e "❌  $CON_BOLD$CON_RED$1$CON_DEFAULT"; }
-echoWarning() { echo -e "⚠️  $CON_BOLD$CON_YELLOW$1$CON_DEFAULT"; }
-echoInfo()    { echo -e "ℹ️  $CON_BOLD$1$CON_DEFAULT"; }
-echoSuccess() { echo -e "✅  $CON_BOLD$CON_GREEN$1$CON_DEFAULT"; }
-echoVerbose() { if [ $_VERBOSE == 1 ] ; then echoInfo "$1"; fi }
-echoFancy() { echo -e "💪  ${1} $CON_YELLOW_UNDERLINE${2}$CON_DEFAULT ..."; }
-
 # Include the Functions.
 source "$( dirname "${BASH_SOURCE[0]}" )/lib/functions.sh"
 
+
+function list_commands()
+{
+  echo "ci bootstrap clean generate install list run"
+}
+
+function list_parameters_for_command()
+{
+  case "$1" in
+    ci)
+      echo "install script"
+      ;;
+    clean)
+      echo "install script"
+      ;;
+    install)
+      echo "apothecary dependencies libraries openframeworks shared_data example_data test_data"
+      ;;
+    bootstrap)
+      echo ""
+      ;;
+    list)
+      echo "addon_dependencies dependencies examples tests"
+      ;;
+    generate)
+      echo "all examples tests"
+      ;;
+    build)
+      echo "all examples tests"
+      ;;
+    run)
+      echo "all examples tests"
+      ;;
+  esac
+}
+
 JOBS=$(get_max_number_of_jobs)
+
+# Force an action that is prevented by default.
+FORCE=false
+
+function make_command_parameter_list()
+{
+  for command in $(list_commands)
+  do 
+    echo "  $command"
+    params=$(list_parameters_for_command ${command})
+    echo "    - ${params:-N/A}"
+  done
+}
+
+HELP="${CON_YELLOW_BOLD_UNDERLINE}USAGE${CON_DEFAULT}: ${CON_YELLOW}ofx${CON_DEFAULT} [options] <command> [command parameters] <addon>
+
+${CON_YELLOW}about${CON_DEFAULT}:
+ This is ofx, the openFrameworks addons multi-tool.
+${CON_YELLOW}options${CON_DEFAULT}:
+  -j The number of jobs (cores) used when compiling.
+  -t The target platform.
+  -p The Project Generator command-line app path.
+  -o The openFrameworks root path.
+  -f Force an action that is prevented by default.
+  -h or -? Print this usage guide.
+  -v Verbosity level.
+      -v    Print variables.
+      -vv   Print variables, show program output.
+      -vv   Print variables, show program output.
+      -vvv  Print variables, show program output, build output.
+      -vvvv Print variables, show program output, build output, set -v for bash output.
+${CON_YELLOW}commands${CON_DEFAULT}:
+  $(list_commands)
+${CON_YELLOW}command parameters${CON_DEFAULT}:
+$(make_command_parameter_list)
+${CON_YELLOW}addon${CON_DEFAULT}:
+  Addon Name - The name of an addon in the openFrameworks/addons directory. 
+    ofxAddon
+  Addon Path - The relative or absolute path of an addon.
+    /openFrameworks/app/project/local_addons/ofxAddon
+${CON_YELLOW}examples${CON_DEFAULT}:
+  ./ofx bootstrap ofxAddon
+${CON_YELLOW}more info${CON_DEFAULT}:
+  https://github.com/bakercp/ofx
+"
+
+
+
 
 # Tutorial: https://wiki.bash-hackers.org/howto/getopts_tutorial
 
@@ -69,186 +124,169 @@ JOBS=$(get_max_number_of_jobs)
 OPTIND=1 # Reset in case getopts has been used previously in the shell.
 
 # When a colon is after an character, that character expects an argument.
-while getopts j:p:t:o:hv opt ; do
+while getopts j:p:t:o:fhv opt ; do
   case "$opt" in
     j) JOBS=$OPTARG ; ;;
     p) OF_PROJECT_GENERATOR_BIN_PATH=$OPTARG ; ;;
     t) TARGET_PLATFORM=$OPTARG ; ;;
     o) OF_ROOT=$OPTARG ; ;;
-    h|\?) echoInfo "$HELP" ; exit 1 ;;
-    v) _VERBOSE=1 ;;
+    f) FORCE=true ; ;;
+    h|\?) echo -e "$HELP" ; exit 1 ;;
+    v) LOG_LEVEL=$((LOG_LEVEL+1)) ;;
   esac
 done
 shift "$((OPTIND-1))"
 
-# Get the last argument (which must start with ofx or be a path to a folder that starts with ofx)
-for arg in $@; do :; done
-WORKING_ADDON_PATH=${arg}
-
-# Remove the last argument.
-set -- "${@:1:$(($#-1))}"
-
-# Get command.
-if [ $# -gt 0 ] ; then
-  A_CMD="$1"
-else
-  echoWarning "Missing command. See help: '$0 -h'."
-  exit 1
-fi
-
-shift 1
-
-# Some commands don't require targets.
-if ! [ "$A_CMD" == "bootstrap" ]; then
-  # check for arguments
-  if [ $# -lt 1 ] ; then
-    echoError " Missing command target. See help: 'ofx -h'."
-    exit 1
-  fi
+if [ $LOG_LEVEL -gt 3 ]; then 
+  set -v
 fi
 
 # Determine the platform being used.
 HOST_PLATFORM=${HOST_PLATFORM:-$(os)}
 TARGET_PLATFORM=${TARGET_PLATFORM:-$(os)}
 
-
-# # TODO: do we want to be this strict?
-# if [[ ${WORKING_ADDON_PATH##*/} != ofx* ]]; then 
-#   echoError "Addon name does not begin with \"ofx\"."
-#   exit 1
-# fi
-
-# if [ ! -d $(get_abs_filename $WORKING_ADDON) ]; then 
-#   echoError "The addon path does not exist."
-#   exit 1
-# fi
-
-
-# Set defaults based on environment.
-_CI=${CI:-}
-_APPVEYOR=${APPVEYOR:-}
-_TRAVIS=${TRAVIS:-}
-
 IS_LOCAL_ADDON=false
 
-if [ ! -z ${_CI} ] && [ "$_CI" == "true" ]; then
-  OF_ROOT=${OF_ROOT:-~/openFrameworks}
-  if [ ! -z ${_APPVEYOR} ] && [ "$_APPVEYOR" == "true" ]; then
-    THIS_ADDON_NAME=${APPVEYOR_PROJECT_SLUG#*/}
-    THIS_USERNAME=${APPVEYOR_PROJECT_SLUG%/*}
-    THIS_BRANCH=${APPVEYOR_REPO_BRANCH}
-  elif [ ! -z ${_TRAVIS} ] && [ "$_TRAVIS" == "true" ]; then
-    THIS_ADDON_NAME=${TRAVIS_REPO_SLUG#*/}
-    THIS_USERNAME=${TRAVIS_REPO_SLUG%/*}
-    THIS_BRANCH=${TRAVIS_BRANCH}
-  fi
-else
-  OF_ROOT=${OF_ROOT:-$(cd "$( dirname "${BASH_SOURCE[0]}" )/../../" && pwd)}
-  
-  WORKING_ADDON_PATH_ABS=$(get_abs_filename ${WORKING_ADDON_PATH})
-  THIS_ADDON_NAME=${WORKING_ADDON_PATH_ABS##*/}
-  THIS_USERNAME=$(whoami)
-  THIS_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+CI=${CI:-false}
+APPVEYOR=${APPVEYOR:-false}
+TRAVIS=${TRAVIS:-false}
 
-  if [ -d ${WORKING_ADDON_PATH_ABS} ]; then 
-    ADDON_PARENT_DIRECTORY=$(basename "$(cd "$( dirname "${WORKING_ADDON_PATH_ABS}" )" && pwd)")
-    if [ "${ADDON_PARENT_DIRECTORY}" == "local_addons" ]; then 
-      THIS_ADDON_PATH=${WORKING_ADDON_PATH_ABS}
-      IS_LOCAL_ADDON=true
-    fi  
-  elif [[ ${WORKING_ADDON_PATH} != ofx* ]]; then
-    echoError "Unable to resolve addon: ${WORKING_ADDON_PATH}"
-    exit 1
-  fi 
-fi
-
-# OF paths.
-OF_ADDONS_PATH=${OF_ADDONS_PATH:-${OF_ROOT}/addons}
-OF_SCRIPTS_PATH=${OF_SCRIPTS_PATH:-${OF_ROOT}/scripts}
-OF_APOTHECARY_PATH=${OF_APOTHECARY_PATH:-${OF_SCRIPTS_PATH}/apothecary}
-
-# Addon paths.
-THIS_ADDON_PATH=${THIS_ADDON_PATH:-${OF_ADDONS_PATH}/${THIS_ADDON_NAME}}
-THIS_ADDON_SHARED_PATH=${THIS_ADDON_SHARED_PATH:-${THIS_ADDON_PATH}/shared}
-THIS_ADDON_SHARED_DATA_PATH=${THIS_ADDON_SHARED_DATA_PATH:-${THIS_ADDON_SHARED_PATH}/data}
-THIS_ADDON_SCRIPTS_PATH=${THIS_ADDON_SCRIPTS_PATH:-${THIS_ADDON_PATH}/scripts}
-
-# OF Clone info.
-OF_CLONE_DEPTH=${OF_CLONE_DEPTH:-${DEFAULT_CLONE_DEPTH}}
-OF_CLONE_BRANCH=${OF_CLONE_BRANCH:-${THIS_BRANCH}}
-OF_CLONE_USERNAME=${OF_CLONE_USERNAME:-openFrameworks}
-
-# Addon Clone info.
-ADDON_CLONE_DEPTH=${ADDON_CLONE_DEPTH:-${DEFAULT_CLONE_DEPTH}}
-ADDON_CLONE_BRANCH=${ADDON_CLONE_BRANCH:-${THIS_BRANCH}}
-ADDON_CLONE_USERNAME=${ADDON_CLONE_USERNAME:-${THIS_USERNAME}}
-
-# Project generator info.
-
-if [ "${HOST_PLATFORM}" == "osx" ]; then
-  OF_PROJECT_GENERATOR_PATH=${OF_PROJECT_GENERATOR_PATH:-$OF_ROOT/projectGenerator_${HOST_PLATFORM}}
-else
-  OF_PROJECT_GENERATOR_PATH=${OF_PROJECT_GENERATOR_PATH:-$OF_ROOT/projectGenerator-${HOST_PLATFORM}}
-fi
-
-if [ -z ${OF_PROJECT_GENERATOR_BIN_PATH+x} ]; then
-    if [ "${HOST_PLATFORM}" == "osx" ]; then
-      OF_PROJECT_GENERATOR_BIN_PATH=${OF_PROJECT_GENERATOR_PATH}/projectGenerator.app/Contents/Resources/app/app
-    else
-      OF_PROJECT_GENERATOR_BIN_PATH=${OF_PROJECT_GENERATOR_PATH}/resources/app/app
+function initialize_variables() {
+  if [ "$CI" == "true" ]; then
+    OF_ROOT=${OF_ROOT:-~/openFrameworks}
+    if [ "$APPVEYOR" == "true" ]; then
+      THIS_ADDON_NAME=${APPVEYOR_PROJECT_SLUG#*/}
+      THIS_USERNAME=${APPVEYOR_PROJECT_SLUG%/*}
+      THIS_BRANCH=${APPVEYOR_REPO_BRANCH}
+    elif [ "$TRAVIS" == "true" ]; then
+      THIS_ADDON_NAME=${TRAVIS_REPO_SLUG#*/}
+      THIS_USERNAME=${TRAVIS_REPO_SLUG%/*}
+      THIS_BRANCH=${TRAVIS_BRANCH}
     fi
-fi
+  else
+    OF_ROOT=${OF_ROOT:-$(cd "$( dirname "${BASH_SOURCE[0]}" )/../../" && pwd)}
+    
+    TARGET_ADDON_PATH_ABS=$(get_abs_filename ${TARGET_ADDON_PATH})
+    THIS_ADDON_NAME=${TARGET_ADDON_PATH_ABS##*/}
+    THIS_USERNAME=$(whoami)
+    THIS_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
-OF_PROJECT_GENERATOR_BIN=projectGenerator
-OF_PROJECT_GENERATOR_COMMAND=${OF_PROJECT_GENERATOR_BIN_PATH}/./${OF_PROJECT_GENERATOR_BIN}
+    if [ -d ${TARGET_ADDON_PATH_ABS} ]; then 
+      ADDON_PARENT_DIRECTORY=$(basename "$(cd "$( dirname "${TARGET_ADDON_PATH_ABS}" )" && pwd)")
+      if [ "${ADDON_PARENT_DIRECTORY}" == "local_addons" ]; then 
+        THIS_ADDON_PATH=${TARGET_ADDON_PATH_ABS}
+        IS_LOCAL_ADDON=true
+      fi  
+    elif [[ ${TARGET_ADDON_PATH} != ofx* ]]; then
+      echoError "Unable to resolve addon: ${TARGET_ADDON_PATH}"
+      exit 1
+    fi 
+  fi
 
-if [ -f ${OF_PROJECT_GENERATOR_COMMAND} ]; then
-  OF_PROJECT_GENERATOR_AVAILABLE=true
-else
-  OF_PROJECT_GENERATOR_AVAILABLE=false
-fi
+  # OF paths.
+  OF_ADDONS_PATH=${OF_ADDONS_PATH:-${OF_ROOT}/addons}
+  OF_SCRIPTS_PATH=${OF_SCRIPTS_PATH:-${OF_ROOT}/scripts}
+  OF_APOTHECARY_PATH=${OF_APOTHECARY_PATH:-${OF_SCRIPTS_PATH}/apothecary}
 
-if [ $_VERBOSE == 1 ]; then
-  echo "================================================================================"
-  echo ""
-  echo "                          IS_LOCAL_ADDON: ${IS_LOCAL_ADDON}"
-  echo "                           HOST_PLATFORM: ${HOST_PLATFORM}"
-  echo "                         TARGET_PLATFORM: ${TARGET_PLATFORM}"
-  echo ""
-  echo "                                     _CI: ${_CI}"
-  echo "                               _APPVEYOR: ${_APPVEYOR}"
-  echo "                                 _TRAVIS: ${_TRAVIS}"
-  echo ""
-  echo "                                 OF_ROOT: ${OF_ROOT}"
-  echo "                          OF_ADDONS_PATH: ${OF_ADDONS_PATH}"
-  echo "                         OF_SCRIPTS_PATH: ${OF_SCRIPTS_PATH}"
-  echo "                      OF_APOTHECARY_PATH: ${OF_APOTHECARY_PATH}"
-  echo "               OF_PROJECT_GENERATOR_PATH: ${OF_PROJECT_GENERATOR_PATH}"
-  echo "           OF_PROJECT_GENERATOR_BIN_PATH: ${OF_PROJECT_GENERATOR_BIN_PATH}"
-  echo "                OF_PROJECT_GENERATOR_BIN: ${OF_PROJECT_GENERATOR_BIN}"
-  echo "          OF_PROJECT_GENERATOR_AVAILABLE: ${OF_PROJECT_GENERATOR_AVAILABLE}"
-  echo ""
-  echo "                         THIS_ADDON_NAME: ${THIS_ADDON_NAME}"
-  echo "                         THIS_ADDON_PATH: ${THIS_ADDON_PATH}"
-  echo "             THIS_ADDON_SHARED_DATA_PATH: ${THIS_ADDON_SHARED_DATA_PATH}"
-  echo "                 THIS_ADDON_SCRIPTS_PATH: ${THIS_ADDON_SCRIPTS_PATH}"
-  echo ""
-  echo "                           THIS_USERNAME: ${THIS_USERNAME}"
-  echo "                             THIS_BRANCH: ${THIS_BRANCH}"
-  echo ""
-  echo "                          OF_CLONE_DEPTH: ${OF_CLONE_DEPTH}"
-  echo "                         OF_CLONE_BRANCH: ${OF_CLONE_BRANCH}"
-  echo "                       OF_CLONE_USERNAME: ${OF_CLONE_USERNAME}"
-  echo ""
-  echo "                       ADDON_CLONE_DEPTH: ${ADDON_CLONE_DEPTH}"
-  echo "                      ADDON_CLONE_BRANCH: ${ADDON_CLONE_BRANCH}"
-  echo "                    ADDON_CLONE_USERNAME: ${ADDON_CLONE_USERNAME}"
-  echo ""
-  echo "                                    JOBS: ${JOBS}"
-  echo "                                _VERBOSE: ${_VERBOSE}"
-  echo ""
-  echo "================================================================================"
-fi
+  # Addon paths.
+  THIS_ADDON_PATH=${THIS_ADDON_PATH:-${OF_ADDONS_PATH}/${THIS_ADDON_NAME}}
+  THIS_ADDON_SHARED_PATH=${THIS_ADDON_SHARED_PATH:-${THIS_ADDON_PATH}/shared}
+  THIS_ADDON_SHARED_DATA_PATH=${THIS_ADDON_SHARED_DATA_PATH:-${THIS_ADDON_SHARED_PATH}/data}
+  THIS_ADDON_SCRIPTS_PATH=${THIS_ADDON_SCRIPTS_PATH:-${THIS_ADDON_PATH}/scripts}
+
+  # OF Clone info.
+  OF_CLONE_DEPTH=${OF_CLONE_DEPTH:-${DEFAULT_CLONE_DEPTH}}
+  OF_CLONE_BRANCH=${OF_CLONE_BRANCH:-${THIS_BRANCH}}
+  OF_CLONE_USERNAME=${OF_CLONE_USERNAME:-openFrameworks}
+
+  # Addon Clone info.
+  ADDON_CLONE_DEPTH=${ADDON_CLONE_DEPTH:-${DEFAULT_CLONE_DEPTH}}
+  ADDON_CLONE_BRANCH=${ADDON_CLONE_BRANCH:-${THIS_BRANCH}}
+  ADDON_CLONE_USERNAME=${ADDON_CLONE_USERNAME:-${THIS_USERNAME}}
+
+  # Project generator info.
+
+  if [ "${HOST_PLATFORM}" == "osx" ]; then
+    OF_PROJECT_GENERATOR_PATH=${OF_PROJECT_GENERATOR_PATH:-$OF_ROOT/projectGenerator_${HOST_PLATFORM}}
+  else
+    OF_PROJECT_GENERATOR_PATH=${OF_PROJECT_GENERATOR_PATH:-$OF_ROOT/projectGenerator-${HOST_PLATFORM}}
+  fi
+
+  if [ -z ${OF_PROJECT_GENERATOR_BIN_PATH+x} ]; then
+      if [ "${HOST_PLATFORM}" == "osx" ]; then
+        OF_PROJECT_GENERATOR_BIN_PATH=${OF_PROJECT_GENERATOR_PATH}/projectGenerator.app/Contents/Resources/app/app
+      else
+        OF_PROJECT_GENERATOR_BIN_PATH=${OF_PROJECT_GENERATOR_PATH}/resources/app/app
+      fi
+  fi
+
+  OF_PROJECT_GENERATOR_BIN=projectGenerator
+  OF_PROJECT_GENERATOR_COMMAND=${OF_PROJECT_GENERATOR_BIN_PATH}/./${OF_PROJECT_GENERATOR_BIN}
+
+  if [ -f ${OF_PROJECT_GENERATOR_COMMAND} ]; then
+    OF_PROJECT_GENERATOR_AVAILABLE=true
+  else
+    OF_PROJECT_GENERATOR_AVAILABLE=false
+  fi
+
+  EXAMPLE_PROJECTS=${THIS_ADDON_PATH}/example*
+  TEST_PROJECTS=${THIS_ADDON_PATH}/tests
+  ALL_PROJECTS=${THIS_ADDON_PATH}
+
+  if [ $LOG_LEVEL -gt 0 ]; then
+    echo "================================================================================"
+    echo ""
+    echo "                          IS_LOCAL_ADDON: ${IS_LOCAL_ADDON}"
+    echo "                           HOST_PLATFORM: ${HOST_PLATFORM}"
+    echo "                         TARGET_PLATFORM: ${TARGET_PLATFORM}"
+    echo ""
+    echo "                                      CI: ${CI}"
+    echo "                                APPVEYOR: ${APPVEYOR}"
+    echo "                                  TRAVIS: ${TRAVIS}"
+    echo ""
+    echo "                                 OF_ROOT: ${OF_ROOT}"
+    echo "                          OF_ADDONS_PATH: ${OF_ADDONS_PATH}"
+    echo "                         OF_SCRIPTS_PATH: ${OF_SCRIPTS_PATH}"
+    echo "                      OF_APOTHECARY_PATH: ${OF_APOTHECARY_PATH}"
+    echo "               OF_PROJECT_GENERATOR_PATH: ${OF_PROJECT_GENERATOR_PATH}"
+    echo "           OF_PROJECT_GENERATOR_BIN_PATH: ${OF_PROJECT_GENERATOR_BIN_PATH}"
+    echo "                OF_PROJECT_GENERATOR_BIN: ${OF_PROJECT_GENERATOR_BIN}"
+    echo "          OF_PROJECT_GENERATOR_AVAILABLE: ${OF_PROJECT_GENERATOR_AVAILABLE}"
+    echo ""
+    echo "                         THIS_ADDON_NAME: ${THIS_ADDON_NAME}"
+    echo "                         THIS_ADDON_PATH: ${THIS_ADDON_PATH}"
+    echo "             THIS_ADDON_SHARED_DATA_PATH: ${THIS_ADDON_SHARED_DATA_PATH}"
+    echo "                 THIS_ADDON_SCRIPTS_PATH: ${THIS_ADDON_SCRIPTS_PATH}"
+    echo ""
+    echo "                           THIS_USERNAME: ${THIS_USERNAME}"
+    echo "                             THIS_BRANCH: ${THIS_BRANCH}"
+    echo ""
+    echo "                          OF_CLONE_DEPTH: ${OF_CLONE_DEPTH}"
+    echo "                         OF_CLONE_BRANCH: ${OF_CLONE_BRANCH}"
+    echo "                       OF_CLONE_USERNAME: ${OF_CLONE_USERNAME}"
+    echo ""
+    echo "                       ADDON_CLONE_DEPTH: ${ADDON_CLONE_DEPTH}"
+    echo "                      ADDON_CLONE_BRANCH: ${ADDON_CLONE_BRANCH}"
+    echo "                    ADDON_CLONE_USERNAME: ${ADDON_CLONE_USERNAME}"
+    echo ""
+    echo "                                    JOBS: ${JOBS}"
+    echo "                               LOG_LEVEL: ${LOG_LEVEL}"
+    echo ""
+    echo "================================================================================"
+  fi
+
+  for DIR in ${OF_ROOT} ${OF_ADDONS_PATH} ${OF_SCRIPTS_PATH}
+  do
+    if [ ! -d ${DIR} ]; then 
+      echoError "${DIR} does not exist. Is ofx installed in the openFrameworks/scripts/ofx directory or is the -o flag set to the openFrameworks directory?"
+      exit 1
+    fi
+  done
+
+}
+
+
+
 
 # Include the Helpers.
 source "$( dirname "${BASH_SOURCE[0]}" )/lib/apothecary_helper.sh"
@@ -261,7 +299,7 @@ function clone_addons()
   for addon in "$@"
   do
     if [ ! -d ${OF_ADDONS_PATH}/${addon} ]; then
-      echoInfo "Installing: ${OF_ADDONS_PATH}/${addon}"
+      echoInfo "Installing" "addon" "${OF_ADDONS_PATH}/${addon}"
       git clone --quiet --depth=${ADDON_CLONE_DEPTH} -b ${ADDON_CLONE_BRANCH} https://github.com/${ADDON_CLONE_USERNAME}/${addon}.git ${OF_ADDONS_PATH}/${addon}
 
       # Bootstrap addon if needed.
@@ -338,14 +376,14 @@ function get_all_addon_dependencies()
 
 function install_dependencies()
 {
-  echoFancy "Installing" "dependencies"
+  echoInfo "Installing" "Dependencies"
   (clone_addons $(get_all_addon_dependencies))
 }
 
 
 function install_shared_data()
 {
-  echoFancy "Installing" "shared data"
+  echoInfo "Installing" "Shared Data"
 
   if [ -d ${THIS_ADDON_SHARED_DATA_PATH} ] ; then
     SHARED_DATA_SCRIPTS=$(find -L ${THIS_ADDON_SHARED_DATA_PATH} -name *.sh)
@@ -398,7 +436,7 @@ function install_data_for_project()
 
               if ! [ -e ${DST_PATH} ]; then
                 if ! [ -e ${SRC_PATH} ]; then
-                  echo "❌ ${SRC_PATH} does not exist. Did you install the shared data?"
+                  echoError "${SRC_PATH} does not exist. Did you install the shared data?"
                   continue
                 fi
 
@@ -406,7 +444,7 @@ function install_data_for_project()
                 rsync -Pvqar ${SRC_PATH} ${DST_PATH}
               fi
 
-              echo "✅ ${SRC_PATH} 👉 ${DST_PATH}"
+              echoSuccess "Copied" "${SRC} 👉 ${DST_PATH}"
             else
               if [[ -z ${DST} ]]; then
                 DST=$(basename ${SRC})
@@ -415,7 +453,7 @@ function install_data_for_project()
               if ! [ -e ${DST_PATH} ]; then
                 curl --progress-bar --create-dirs -o ${DST_PATH} -L ${SRC}
               fi
-              echo "✅ ${SRC} 👉 ${DST_PATH}"
+              echoSuccess "Downloaded" "${SRC} 👉 ${DST_PATH}"
             fi
           fi
         done < ${data_file}
@@ -423,9 +461,9 @@ function install_data_for_project()
     fi
 
     if [ ${did_install} == "true" ]; then
-      echoSuccess "Installed data for: ${PROJECT_PATH#"${THIS_ADDON_PATH}/"}"
+      echoSuccess "Installed" "data for" "${PROJECT_PATH#"${THIS_ADDON_PATH}/"}"
     else
-      echoInfo "No shared data for: ${PROJECT_PATH#"${THIS_ADDON_PATH}/"}"
+      echoInfo "No Data Installed" "for" "${PROJECT_PATH#"${THIS_ADDON_PATH}/"}"
     fi
 }
 
@@ -433,13 +471,13 @@ function install_data_for_project()
 function list()
 {
   case "$1" in
-    examples) shift 1; list_examples "$@" ;;
     addon_dependencies) shift 1; list_addon_dependencies "$@" ;;
+    examples) shift 1; list_examples "$@" ;;
     tests) shift 1; list_tests "$@" ;;
     dependencies) shift 1; get_all_addon_dependencies "$@" ;;
     *)
-      echoError " Unknown list target: \"$1\""
-      echoError " valid: examples, addon_dependencies, tests"
+      echoError "Unknown" "list" "target: \"$1\""
+      echoError "valid: examples, addon_dependencies, tests"
       exit 1 ;;
   esac
 }
@@ -472,8 +510,8 @@ function clean()
       clean_test_build_files "$@"
       ;;
     *)
-      echoError " Unknown clean target: \"$1\""
-      echoError " valid: all, apothecary, example_project_files, test_project_files, example_build_files, test_build_files, projects, build"
+      echoError "Unknown" "clean" "target: \"$1\""
+      echoError "valid: all, apothecary, example_project_files, test_project_files, example_build_files, test_build_files, projects, build"
       exit 1 ;;
   esac
 }
@@ -490,8 +528,8 @@ function install()
     example_data) shift 1; install_example_data "$@" ;;
     test_data) shift 1; install_test_data "$@" ;;
     *)
-      echoError " Unknown install target: \"$1\""
-      echoError " valid: apothecary, dependencies, libraries, openframeworks, shared_data, example_data test_data"
+      echoError "Unknown" "install" "target" ":\"$1\""
+      echoError "valid: apothecary, dependencies, libraries, openframeworks, shared_data, example_data test_data"
       exit 1;;
   esac
 }
@@ -519,16 +557,16 @@ function generate_all()
 function generate()
 {
   case "$1" in
-    examples) shift 1; generate_examples "$@" ;;
-    tests) shift 1; generate_tests "$@" ;;
     all)
       shift 1
       generate_examples "$@"
       generate_tests "$@"
       ;;
+    examples) shift 1; generate_examples "$@" ;;
+    tests) shift 1; generate_tests "$@" ;;
     *)
-      echoError " Unknown generate target: \"$1\""
-      echoError " valid: all, examples, tests"
+      echoError "Unknown" "generate" "target: \"$1\""
+      echoError "valid: all, examples, tests"
       exit 1;;
   esac
 }
@@ -561,8 +599,8 @@ function build()
     examples) shift 1; build_examples "$@" ;;
     tests) shift 1; build_tests "$@" ;;
     *)
-      echoError " Unknown build target: \"$1\""
-      echoError " valid: all, examples, tests"
+      echoError "Unknown" "build" "target: \"$1\""
+      echoError "valid: all, examples, tests"
       exit 1;;
   esac
 }
@@ -595,8 +633,8 @@ function run()
     examples) shift 1; run_examples "$@" ;;
     tests) shift 1; run_tests "$@" ;;
     *)
-      echoError " Unknown run target: \"$1\""
-      echoError " valid: all, examples, tests"
+      echoError "Unknown" "run" "target: \"$1\""
+      echoError "valid: all, examples, tests"
       exit 1;;
   esac
 }
@@ -604,7 +642,7 @@ function run()
 
 function bootstrap()
 {
-  echoFancy "Bootstrapping" "${THIS_ADDON_NAME}"
+  echoInfo "Bootstrapping" "${THIS_ADDON_NAME}"
 
   echo -e "\n\t👢 \033[31;1;4m/ˈbo͞otˌstrap/\033[0m - \"a technique of loading a program into a"
   echo -e "\tcomputer by means of a few initial instructions that enable "
@@ -623,13 +661,13 @@ function bootstrap()
 
 function ci_install()
 {
-  echoFancy "CI" "Install"
+  echoInfo "CI" "Install"
 
   # Check to see if we are running in a CI server / environment.
   if [ "${_CI}" == "true" ]; then
     if [ "${_TRAVIS}" == "true" ]; then
 
-      echoFancy "Installing" "openFrameworks"
+      echoInfo "Installing" "openFrameworks"
       if [ ! -d ${OF_ROOT} ]; then
           git clone --depth=${OF_CLONE_DEPTH} --branch=${OF_CLONE_BRANCH} https://github.com/${OF_CLONE_USERNAME}/openFrameworks.git ${OF_ROOT}
           pushd ${OF_ROOT} > /dev/null
@@ -653,7 +691,7 @@ function ci_install()
 
 function ci_script()
 {
-  echoFancy "CI" "Run"
+  echoInfo "CI" "Run"
 
   # Run bootstrap (see above).
   bootstrap
@@ -678,17 +716,63 @@ function ci()
       ci_script "$@" 
       ;;
     *)
-      echoError " Unknown ci target: \"$1\""
-      echoError " valid: install, script"
+      echoError "Unknown" "ci" "target: \"$1\""
+      echoError "valid: install, script"
+      exit 1;;
+  esac
+}
+
+function update_template()
+{
+  echo "Updating template."
+
+}
+
+
+function update()
+{
+  case "$1" in
+    template)
+      shift 1
+      update_template "$@"
+      ;;
+    *)
+      echoError "Unknown" "update" "target: \"$1\""
+      echoError "valid: template"
       exit 1;;
   esac
 }
 
 
-# handle commands
-echoVerbose "Running: $A_CMD $*"
-case "$A_CMD" in
 
+if [ $# -lt 2 ]; then 
+  echoError "A command and target addon are required arguments."
+  echo -e "$HELP"
+  exit 1
+fi 
+
+# Get the last argument (this should be the targeted addon)
+for arg in $@; do :; done
+TARGET_ADDON_PATH=${arg}
+
+# Remove the last argument.
+set -- "${@:1:$(($#-1))}"
+
+# Get command.
+if [ $# -gt 0 ] ; then
+  COMMAND="$1"
+  shift 1
+else
+  echoError "Missing command."
+  echo -e "$HELP"
+  exit 1
+fi
+
+# Now that we have the command and the addon, initialize variables.
+initialize_variables
+
+# Handle Command
+case "$COMMAND" in
   ci)
     ci "$@" ;;
   clean)
@@ -705,8 +789,10 @@ case "$A_CMD" in
     build "$@" ;;
   run)
     run "$@" ;;
+  update)
+    update "$@" ;;
   *)
-    echoError " Unknown command \"$A_CMD\""
+    echoError "Unknown" "command" "\"$COMMAND\""
     exit 1 ;;
 esac
 

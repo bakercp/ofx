@@ -4,17 +4,12 @@
 # Included by ../ofx
 
 
-EXAMPLE_PROJECTS=${THIS_ADDON_PATH}/example*
-TEST_PROJECTS=${THIS_ADDON_PATH}/tests
-ALL_PROJECTS=${THIS_ADDON_PATH}
-
-
 function do_function_for_projects
 {
   local the_function=$1
   local the_projects=$2
   shift 2
-  echoFancy "$the_function for" "${the_projects#$THIS_ADDON_PATH/}"
+  echoInfo "$the_function" "${the_projects#$THIS_ADDON_PATH/}"
   for project in $(find_projects "$the_projects"); do
     (${the_function} "${project}" $@)
   done
@@ -80,16 +75,16 @@ function generate_project()
   TEMPLATE_MAKEFILE=${OF_SCRIPTS_PATH}/templates/${HOST_PLATFORM}/Makefile
   TEMPLATE_CONFIG_MAKE=${OF_SCRIPTS_PATH}/templates/${HOST_PLATFORM}/config.make
 
-  # if [ $_VERBOSE == 1 ]; then
-  #   echo "================================================================================"
-  #   echo ""
-  #   echo "                         PROJECT_MAKEFILE: ${PROJECT_MAKEFILE}"
-  #   echo "                      PROJECT_CONFIG_MAKE: ${PROJECT_CONFIG_MAKE}"
-  #   echo "                       TEMPLATE_MAKEFILE: ${TEMPLATE_MAKEFILE}"
-  #   echo "                    TEMPLATE_CONFIG_MAKE: ${TEMPLATE_CONFIG_MAKE}"
-  #   echo ""
-  #   echo "================================================================================"
-  # fi
+  if [ $LOG_LEVEL -gt 0 ]; then
+    echo "================================================================================"
+    echo ""
+    echo "                         PROJECT_MAKEFILE: ${PROJECT_MAKEFILE}"
+    echo "                      PROJECT_CONFIG_MAKE: ${PROJECT_CONFIG_MAKE}"
+    echo "                       TEMPLATE_MAKEFILE: ${TEMPLATE_MAKEFILE}"
+    echo "                    TEMPLATE_CONFIG_MAKE: ${TEMPLATE_CONFIG_MAKE}"
+    echo ""
+    echo "================================================================================"
+  fi
 
   if [ ${OF_PROJECT_GENERATOR_AVAILABLE} == true ]; then
     if [ -f ${PROJECT_MAKEFILE} ]; then
@@ -102,7 +97,13 @@ function generate_project()
       rm ${PROJECT_CONFIG_MAKE}
     fi
 
-    ${OF_PROJECT_GENERATOR_COMMAND} -o${OF_ROOT} ${PROJECT_PATH} -p${TARGET_PLATFORM}
+    if [ $LOG_LEVEL -gt 1 ]; then
+      ${OF_PROJECT_GENERATOR_COMMAND} -o${OF_ROOT} ${PROJECT_PATH} -p${TARGET_PLATFORM}
+    else 
+      ${OF_PROJECT_GENERATOR_COMMAND} -o${OF_ROOT} ${PROJECT_PATH} -p${TARGET_PLATFORM} > /dev/null
+    fi
+
+
   elif [ "${HOST_PLATFORM}" == "${TARGET_PLATFORM}" ] ; then
     echoWarning "Project Generator is not available, creating makefiles."
 

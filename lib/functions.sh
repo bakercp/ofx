@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
+#
+# Copyright (c) 2019 Christopher Baker <https://christopherbaker.net>
+#
+# SPDX-License-Identifier:	MIT
+#
+
 
 # \brief Convert a string to lower case.
 # \param $1 A string.
@@ -8,6 +14,103 @@ function lowercase()
   echo "${1}" | sed "y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/"
   return 0
 }
+
+# \brief Convert a string to upper case.
+# \param $1 A string.
+# \returns an uppercase string an a 0 exit code on success.
+function uppercase()
+{
+  echo "${1}" | sed "y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/"
+  return 0
+}
+
+
+# Logging
+LOG_VERBOSE_NONE=0
+LOG_VERBOSE_LOW=1
+LOG_VERBOSE_MEDIUM=2
+LOG_VERBOSE_HIGH=3
+
+# Verbose level.
+LOG_LEVEL=$LOG_VERBOSE_NONE
+
+# ANSI console escape codes.
+ANSI_COLOR_DEFAULT="0"
+ANSI_COLOR_RED="31"
+ANSI_COLOR_YELLOW="33"
+ANSI_COLOR_GREEN="32"
+ANSI_COLOR_PURPLE="35"
+
+CON_DEFAULT="\e[${ANSI_COLOR_DEFAULT}m"
+
+CON_BOLD="\e[1m"
+CON_UNDERLINE="\e[4m"
+
+CON_RED="\e[${ANSI_COLOR_RED}m"
+CON_RED_BOLD="\e[${ANSI_COLOR_RED};1m"
+CON_RED_UNDERLINE="\e[${ANSI_COLOR_RED};4m"
+CON_RED_BOLD_UNDERLINE="\e[${ANSI_COLOR_RED};1;4m"
+
+CON_YELLOW="\e[${ANSI_COLOR_YELLOW}m"
+CON_YELLOW_BOLD="\e[${ANSI_COLOR_YELLOW};1m"
+CON_YELLOW_UNDERLINE="\e[${ANSI_COLOR_YELLOW};4m"
+CON_YELLOW_BOLD_UNDERLINE="\e[${ANSI_COLOR_YELLOW};1;4m"
+
+CON_GREEN="\e[${ANSI_COLOR_GREEN}m"
+CON_GREEN_BOLD="\e[${ANSI_COLOR_GREEN};1m"
+CON_GREEN_UNDERLINE="\e[${ANSI_COLOR_GREEN};4m"
+CON_GREEN_BOLD_UNDERLINE="\e[${ANSI_COLOR_GREEN};1;4m"
+
+echoIconColorMessage() {
+  if [ $# -lt 3 ]; then
+    echo -e "Three parameters required: icon, color, message".
+    exit 1
+  fi 
+
+  local icon=${1}
+  local color=${2}
+
+  local _CON_BOLD_UNDERLINE="\e[${color};1;4m"
+  local _CON_BOLD="\e[${color};1m"
+  local _CON_UNDERLINE="\e[${color};4m"
+  local _CON_NONE="\e[${color}m"
+
+  shift 2
+
+  local message=""
+  if [ $# -gt 2 ]; then message="$_CON_BOLD_UNDERLINE$(uppercase ${1})$CON_DEFAULT "; shift 1; fi
+  
+  if [ $# -gt 1 ]; then message="${message}$_CON_BOLD$1$CON_DEFAULT "; shift 1; fi
+  
+  message="${message}$_CON_NONE$@$CON_DEFAULT"; 
+    
+  echo -e "${icon}  ${message}"; 
+
+}
+
+# Console printing functions (with color).
+echoError() { 
+  (echoIconColorMessage "❌" "${ANSI_COLOR_RED}" "$@");
+}
+
+echoWarning() { 
+  (echoIconColorMessage "⚠️" "${ANSI_COLOR_YELLOW}" "$@");
+}
+
+echoInfo() { 
+  (echoIconColorMessage "ℹ️" "${ANSI_COLOR_DEFAULT}" "$@");
+}
+
+echoSuccess() { 
+  (echoIconColorMessage "✅️" "${ANSI_COLOR_GREEN}" "$@");
+}
+
+echoVerbose() {
+  if [ $LOG_LEVEL -gt $LOG_VERBOSE_NONE ] ; then 
+    (echoIconColorMessage "📢️" "${ANSI_COLOR_PURPLE}" "$@");
+  fi 
+}
+
 
 # \brief Get the openFrameworks name of the host operating system.
 # \returns a string an a 0 exit code on success.
@@ -67,6 +170,7 @@ function relpath()
 {
   echo $(perl -e 'use File::Spec; print File::Spec->abs2rel(@ARGV) . "\n"' ${1} ${2})
 }
+
 
 function get_max_number_of_jobs()
 {

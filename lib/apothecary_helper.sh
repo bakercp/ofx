@@ -9,7 +9,7 @@ function clean_apothecary()
     exit 1;
   fi
 
-  echoFancy "Cleaning " "${THIS_ADDON_NAME} libraries for ${TARGET_PLATFORM}"
+  echoInfo "Cleaning " "${THIS_ADDON_NAME} libraries for ${TARGET_PLATFORM}"
   /usr/bin/env bash ${OF_APOTHECARY_PATH}/apothecary/apothecary -j ${JOBS} -t "${TARGET_PLATFORM}" -d "${THIS_ADDON_PATH}/libs" clean "${THIS_ADDON_NAME}"
   echoSuccess "Cleaning of ${THIS_ADDON_NAME} for ${TARGET_PLATFORM} complete."
 }
@@ -69,7 +69,7 @@ function install_apothecary()
 
   # Install any apothecary dependencies.
   if [ -f ${OF_APOTHECARY_PATH}/scripts/${HOST_PLATFORM}/install.sh ] ; then
-    echoFancy "Installing" "Apothecary Dependencies"
+    echoInfo "Installing" "Apothecary Dependencies"
     /usr/bin/env bash ${OF_APOTHECARY_PATH}/scripts/${HOST_PLATFORM}/install.sh
   else
     echoInfo "No additional apothecary dependencies to install."
