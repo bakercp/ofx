@@ -60,7 +60,7 @@ function list_parameters_for_command()
       echo "all examples tests"
       ;;
     build)
-      echo "all examples tests"
+      echo "all documentation examples tests"
       ;;
     run)
       echo "all examples tests"
@@ -193,6 +193,7 @@ function initialize_variables() {
   THIS_ADDON_SHARED_PATH=${THIS_ADDON_SHARED_PATH:-${THIS_ADDON_PATH}/shared}
   THIS_ADDON_SHARED_DATA_PATH=${THIS_ADDON_SHARED_DATA_PATH:-${THIS_ADDON_SHARED_PATH}/data}
   THIS_ADDON_SCRIPTS_PATH=${THIS_ADDON_SCRIPTS_PATH:-${THIS_ADDON_PATH}/scripts}
+  THIS_ADDON_DOCUMENTATION_PATH=${THIS_ADDON_DOCUMENTATION_PATH:-${THIS_ADDON_PATH}/docs}
 
   # OF Clone info.
   OF_CLONE_DEPTH=${OF_CLONE_DEPTH:-${DEFAULT_CLONE_DEPTH}}
@@ -477,7 +478,7 @@ function list()
     dependencies) shift 1; get_all_addon_dependencies "$@" ;;
     *)
       echoError "Unknown" "list" "target: \"$1\""
-      echoError "valid: examples, addon_dependencies, tests"
+      echoError "valid: $(list_parameters_for_command "list")"
       exit 1 ;;
   esac
 }
@@ -511,7 +512,7 @@ function clean()
       ;;
     *)
       echoError "Unknown" "clean" "target: \"$1\""
-      echoError "valid: all, apothecary, example_project_files, test_project_files, example_build_files, test_build_files, projects, build"
+      echoError "valid: $(list_parameters_for_command "clean")"
       exit 1 ;;
   esac
 }
@@ -529,7 +530,7 @@ function install()
     test_data) shift 1; install_test_data "$@" ;;
     *)
       echoError "Unknown" "install" "target" ":\"$1\""
-      echoError "valid: apothecary, dependencies, libraries, openframeworks, shared_data, example_data test_data"
+      echoError "valid: $(list_parameters_for_command "install")"
       exit 1;;
   esac
 }
@@ -566,7 +567,7 @@ function generate()
     tests) shift 1; generate_tests "$@" ;;
     *)
       echoError "Unknown" "generate" "target: \"$1\""
-      echoError "valid: all, examples, tests"
+      echoError "valid: $(list_parameters_for_command "generate")"
       exit 1;;
   esac
 }
@@ -585,8 +586,19 @@ function build_tests()
 
 function build_all()
 {
+  (build_documentation $@)
   (build_examples $@)
   (build_tests $@)
+}
+
+
+function build_documentation()
+{
+  if [ -f ${THIS_ADDON_DOCUMENTATION_PATH}/Doxyfile ]; then
+    pushd ${THIS_ADDON_DOCUMENTATION_PATH} > /dev/null
+    doxygen Doxyfile
+    popd > /dev/null
+  fi
 }
 
 function build()
@@ -596,11 +608,12 @@ function build()
       shift 1
       build_all "$@"
       ;;
+    documentation) shift 1; build_documentation "$@" ;;
     examples) shift 1; build_examples "$@" ;;
     tests) shift 1; build_tests "$@" ;;
     *)
       echoError "Unknown" "build" "target: \"$1\""
-      echoError "valid: all, examples, tests"
+      echoError "valid: $(list_parameters_for_command "build")"
       exit 1;;
   esac
 }
@@ -634,7 +647,7 @@ function run()
     tests) shift 1; run_tests "$@" ;;
     *)
       echoError "Unknown" "run" "target: \"$1\""
-      echoError "valid: all, examples, tests"
+      echoError "valid: $(list_parameters_for_command "run")"
       exit 1;;
   esac
 }
@@ -715,7 +728,7 @@ function ci()
       ;;
     *)
       echoError "Unknown" "ci" "target: \"$1\""
-      echoError "valid: install, script"
+      echoError "valid: $(list_parameters_for_command "ci")"
       exit 1;;
   esac
 }
@@ -736,7 +749,7 @@ function update()
       ;;
     *)
       echoError "Unknown" "update" "target: \"$1\""
-      echoError "valid: template"
+      echoError "valid: $(list_parameters_for_command "update")"
       exit 1;;
   esac
 }
@@ -752,21 +765,23 @@ fi
 for arg in $@; do :; done
 TARGET_ADDON_PATH=${arg}
 
+# Now that we have the command and the addon, initialize variables.
+initialize_variables
+
+
+
 # Remove the last argument.
 set -- "${@:1:$(($#-1))}"
 
 # Get command.
-if [ $# -gt 0 ] ; then
-  COMMAND="$1"
-  shift 1
-else
-  echoError "Missing command."
-  echo -e "$HELP"
-  exit 1
+COMMAND="$1"
+shift 1
+
+if [ "$COMMAND" != "bootstrap" ] && [ $# == 0 ]; then 
+    echoError "The \"$COMMAND\" command requires one of the following command parameter: $(list_parameters_for_command "$COMMAND")"
+    exit 1
 fi
 
-# Now that we have the command and the addon, initialize variables.
-initialize_variables
 
 # Handle Command
 case "$COMMAND" in
