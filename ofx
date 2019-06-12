@@ -664,8 +664,8 @@ function ci_install()
   echoInfo "CI" "Install"
 
   # Check to see if we are running in a CI server / environment.
-  if [ "${_CI}" == "true" ]; then
-    if [ "${_TRAVIS}" == "true" ]; then
+  if [ "${CI}" == "true" ]; then
+    if [ "${TRAVIS}" == "true" ]; then
 
       echoInfo "Installing" "openFrameworks"
       if [ ! -d ${OF_ROOT} ]; then
@@ -684,8 +684,6 @@ function ci_install()
       fi
     fi
   fi 
-
-
 }
 
 
@@ -742,7 +740,6 @@ function update()
       exit 1;;
   esac
 }
-
 
 
 if [ $# -lt 2 ]; then 
