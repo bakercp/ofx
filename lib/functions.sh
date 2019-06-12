@@ -303,14 +303,18 @@ function clean_project_build_files()
 # \returns 0 exit code on success.
 function find_projects()
 {
-  echo $(find -L $1 -name addons.make -exec dirname {} \;)
+  if [ ! -d $1 ]; then
+    echo ""
+  else 
+    echo $(find -L $1 -name addons.make -exec dirname {} \;)
+  fi
+
   return 0
 }
 
+
 function find_example_projects()
 {
-  # echo ">> $1/example*"
-
   echo $(find_projects "$1/example*")
   return 0
 }
