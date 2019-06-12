@@ -301,7 +301,21 @@ function clone_addons()
   do
     if [ ! -d ${OF_ADDONS_PATH}/${addon} ]; then
       echoInfo "Installing" "addon" "${OF_ADDONS_PATH}/${addon}"
-      git clone --quiet --depth=${ADDON_CLONE_DEPTH} -b ${ADDON_CLONE_BRANCH} https://github.com/${ADDON_CLONE_USERNAME}/${addon}.git ${OF_ADDONS_PATH}/${addon}
+
+      git clone --quiet --depth=${ADDON_CLONE_DEPTH} https://github.com/${ADDON_CLONE_USERNAME}/${addon}.git ${OF_ADDONS_PATH}/${addon}
+
+      pushd ${OF_ADDONS_PATH}/${addon} > /dev/null
+
+      if ! git checkout ${ADDON_CLONE_BRANCH}; then
+        if ! git checkout master; then 
+          if ! git checkout stable; then
+            echoError "Unable to check out ${ADDON_CLONE_BRANCH}, master or stable branch for https://github.com/${ADDON_CLONE_USERNAME}/${addon}.git."
+            exit 1
+          fi
+        fi
+      if
+
+      popd > /dev/null
 
       # Bootstrap addon if needed.
       pushd ${OF_ADDONS_PATH}/${addon} > /dev/null
