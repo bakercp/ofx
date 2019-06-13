@@ -134,7 +134,7 @@ function generate_project()
 function get_addon_dependencies_from_all_examples()
 {
   local ADDON_DEPENDENCIES=""
-  for project in $(find_projects ${EXAMPLE_PROJECTS}); do
+  for project in $(find_example_projects ${THIS_ADDON_PATH}); do
     ADDON_DEPENDENCIES="${ADDON_DEPENDENCIES} $(get_addon_dependencies_for_project "${project}")"
   done
   echo $(sort_and_remove_duplicates "${ADDON_DEPENDENCIES}")
@@ -145,7 +145,7 @@ function get_addon_dependencies_from_all_examples()
 function get_addon_dependencies_from_all_tests()
 {
   local ADDON_DEPENDENCIES=""
-  for project in $(find_projects ${TEST_PROJECTS}); do
+  for project in $(find_test_projects ${THIS_ADDON_PATH}); do
     ADDON_DEPENDENCIES="${ADDON_DEPENDENCIES} $(get_addon_dependencies_for_project "${project}")"
   done
   echo $(sort_and_remove_duplicates "${ADDON_DEPENDENCIES}")
