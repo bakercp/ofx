@@ -35,7 +35,7 @@ source "$( dirname "${BASH_SOURCE[0]}" )/lib/functions.sh"
 
 function list_commands()
 {
-  echo "ci bootstrap clean generate install list run"
+  echo "ci bootstrap clean generate install list run update"
 }
 
 function list_parameters_for_command()
@@ -64,6 +64,9 @@ function list_parameters_for_command()
       ;;
     run)
       echo "all examples tests"
+      ;;
+    update)
+      echo "boilerplate"
       ;;
   esac
 }
@@ -747,9 +750,40 @@ function ci()
   esac
 }
 
-function update_template()
+function update_boilerplate()
 {
-  echo "Updating template."
+  echo "Updating boilerplate."
+
+  if [ ! -d ${OF_ADDONS_PATH}/ofxAddon ]; then
+    git clone https://github.com/bakercp/ofxAddon.git ${OF_ADDONS_PATH}/ofxAddon
+  fi
+
+  # The list of boilerplate files from ofxAddon
+  local boilerplate_files=(
+    .gitignore
+    .travis.yml
+    .github/FUNDING.yml
+    .github/ISSUE_TEMPLATE.md
+    .github/PULL_REQUEST_TEMPLATE.md
+    docs/CODE_OF_CONDUCT.md
+    docs/CONTRIBUTING.md
+    docs/Doxyfile
+    docs/GETTING_STARTED.md
+    docs/SUPPORT.md
+    docs/TROUBLESHOOTING.md
+    scripts/bootstrap.sh
+  )
+
+  for file in boilerplate_files
+  do
+    local SRC_FILE=${OF_ADDONS_PATH}/ofxAddon/${file}
+    local DST_FILE=${THIS_ADDON_PATH}/${file}
+
+    
+
+
+    # cp -i ${OF_ADDONS_PATH}/ofxAddon/${file} ${THIS_ADDON_PATH}/${file}
+  done
 
 }
 
@@ -757,9 +791,9 @@ function update_template()
 function update()
 {
   case "$1" in
-    template)
+    boilerplate)
       shift 1
-      update_template "$@"
+      update_boilerplate "$@"
       ;;
     *)
       echoError "Unknown" "update" "target: \"$1\""
