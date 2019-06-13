@@ -362,7 +362,8 @@ function get_addon_dependencies_for_project()
 function build_project()
 {
   pushd $1 > /dev/null
-  make -j${JOBS} -s
+  # make -j${JOBS} -s
+  make -j${JOBS} -s DebugNoOF
   popd > /dev/null
 }
 
