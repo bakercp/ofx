@@ -614,6 +614,7 @@ function build_documentation()
   if [ -f ${THIS_ADDON_DOCUMENTATION_PATH}/Doxyfile ]; then
     pushd ${THIS_ADDON_DOCUMENTATION_PATH} > /dev/null
     doxygen Doxyfile
+    touch html/.nojekyll
     popd > /dev/null
   fi
 }
@@ -725,7 +726,8 @@ function ci_script()
   bootstrap
 
   # Build all projects, including examples.
-  build_all
+  build_examples
+  build_tests
 
   # Run tests, but not examples as many examples require a window.
   run_tests
