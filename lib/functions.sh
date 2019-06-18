@@ -216,13 +216,7 @@ function is_same_file()
 # \returns 0 exit code on success.
 function clean_project_files()
 {
-  local FORCE_CLEAN=false
-
-  if [ $# -gt 1 ] && [ "$2" == "force" ]; then
-    FORCE_CLEAN=true
-  fi
-
-  if [ "${FORCE_CLEAN}" == "true" ]; then
+  if [ "${FORCE}" == "true" ]; then
     # Here we force clean the makefiles and config.make.
     find -L $1 -maxdepth 1 \
     \( \
