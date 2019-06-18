@@ -9,7 +9,9 @@ function do_function_for_projects
   local the_function=$1
   local the_projects=$2
   shift 2
+
   echoInfo "$the_function" "${the_projects#$THIS_ADDON_PATH/}"
+
   for project in $(find_projects "$the_projects"); do
     (${the_function} "${project}" $@)
   done
@@ -78,10 +80,10 @@ function generate_project()
   if [ $LOG_LEVEL -gt 0 ]; then
     echo "================================================================================"
     echo ""
-    echo "                         PROJECT_MAKEFILE: ${PROJECT_MAKEFILE}"
-    echo "                      PROJECT_CONFIG_MAKE: ${PROJECT_CONFIG_MAKE}"
-    echo "                       TEMPLATE_MAKEFILE: ${TEMPLATE_MAKEFILE}"
-    echo "                    TEMPLATE_CONFIG_MAKE: ${TEMPLATE_CONFIG_MAKE}"
+    echo "                       PROJECT_MAKEFILE: ${PROJECT_MAKEFILE}"
+    echo "                    PROJECT_CONFIG_MAKE: ${PROJECT_CONFIG_MAKE}"
+    echo "                      TEMPLATE_MAKEFILE: ${TEMPLATE_MAKEFILE}"
+    echo "                   TEMPLATE_CONFIG_MAKE: ${TEMPLATE_CONFIG_MAKE}"
     echo ""
     echo "================================================================================"
   fi

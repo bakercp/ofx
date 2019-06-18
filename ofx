@@ -286,16 +286,12 @@ function initialize_variables() {
       exit 1
     fi
   done
-
 }
 
-
-
-
 # Include the Helpers.
-source "$( dirname "${BASH_SOURCE[0]}" )/lib/apothecary_helper.sh"
-source "$( dirname "${BASH_SOURCE[0]}" )/lib/project_helper.sh"
-source "$( dirname "${BASH_SOURCE[0]}" )/lib/dependency_helper.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/lib/apothecary_helper.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/lib/project_helper.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/lib/dependency_helper.sh"
 
 # Clone the list of addons and check to make sure all dependencies are satisfied and cloned.
 function clone_addons()

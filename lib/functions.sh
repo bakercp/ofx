@@ -226,7 +226,7 @@ function clean_project_files()
     # Here we force clean the makefiles and config.make.
     find -L $1 -maxdepth 1 \
     \( \
-          -name "*.qbs" \
+         -name "*.qbs" \
       -o -name "*.xcodeproj" \
       -o -name "*.xcconfig" \
       -o -name "*.plist" \
@@ -238,7 +238,7 @@ function clean_project_files()
   else
     find -L $1 -maxdepth 1 \
     \( \
-          -name "*.qbs" \
+         -name "*.qbs" \
       -o -name "*.xcodeproj" \
       -o -name "*.xcconfig" \
       -o -name "*.plist" \
@@ -285,7 +285,7 @@ function clean_project_build_files()
   if [ -d $1/bin ] ; then
     # Project app files
     find -L $1/bin -maxdepth 1 \( \
-        -name "*.app" \
+         -name "*.app" \
       -o -name "*.app.dSYM" \
       -o -name "PkgInfo" \
       -o -name ".tmp" \
@@ -319,12 +319,14 @@ function find_example_projects()
   return 0
 }
 
+
 # \brief Print every test folder with a valid addons.make path.
 function find_test_projects()
 {
   echo $(find_projects "$1/tests")
   return 0
 }
+
 
 # Extract ADDON_DEPENDENCIES from an addon's addon_config.mk file.
 function get_addon_dependencies_for_addon()
