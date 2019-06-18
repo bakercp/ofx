@@ -210,6 +210,43 @@ function is_same_file()
   return 0;
 }
 
+
+function remove_os_files
+{
+  echoInfo "Removing os files for $1"
+
+  find $1 -depth \
+  \( \
+        -name ".DS_Store" \
+    -o -name ".AppleDouble" \
+  \) \
+  -exec rm -rf {} \;  
+}
+
+function remove_empty_data_folders
+{
+  echoInfo "Removing empty data folders for $1"
+
+  find $1 -depth -empty -type d \
+  \( \
+        -name "data" \
+  \) \
+  -exec rm -rf {} \;  
+}
+
+
+function remove_empty_bin_folders
+{
+  echoInfo "Removing empty bin folders for $1"
+
+  find $1 -depth -empty -type d \
+  \( \
+        -name "bin" \
+  \) \
+  -exec rm -rf {} \;  
+}
+
+
 # \brief Clean all project files from the given project.
 # \param $1 The project to clean.
 # \param $2 (optional) To force clean all project files.

@@ -45,7 +45,7 @@ function list_parameters_for_command()
       echo "install script"
       ;;
     clean)
-      echo "all apothecary example_project_files test_project_files example_build_files test_build_files projects build"
+      echo "all apothecary example_project_files filesystem test_project_files example_build_files test_build_files projects build"
       ;;
     install)
       echo "apothecary dependencies libraries openframeworks shared_data example_data test_data"
@@ -500,6 +500,14 @@ function list()
 }
 
 
+function clean_filesystem()
+{
+  (remove_os_files "$THIS_ADDON_PATH")
+  (remove_empty_data_folders "$THIS_ADDON_PATH")
+  (remove_empty_bin_folders "$THIS_ADDON_PATH")
+}
+
+
 function clean()
 {
   case "$1" in
@@ -512,6 +520,7 @@ function clean()
       clean_test_build_files "$@"
       ;;
     apothecary) shift 1; clean_apothecary "$@" ;;
+    filesystem) shift 1; clean_filesystem "$@" ;;
     example_project_files) shift 1; clean_example_project_files "$@" ;;
     test_project_files) shift 1; clean_test_project_files "$@" ;;
     example_build_files) shift 1; clean_example_build_files "$@" ;;
