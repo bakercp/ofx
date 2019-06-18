@@ -253,12 +253,6 @@ function clean_project_files()
 # \returns 0 exit code on success.
 function clean_project_build_files()
 {
-  local FORCE_CLEAN=false
-
-  if [ $# -gt 1 ] && [ "$2" == "force" ]; then
-    FORCE_CLEAN=true
-  fi
-
   # QTCreatorBuild paths
   find -L $1 -maxdepth 1 \( \
       -type d -a \
