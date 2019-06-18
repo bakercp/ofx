@@ -303,7 +303,7 @@ function clean_project_build_files()
 # \returns 0 exit code on success.
 function find_projects()
 {
-  if [ ! -d "$1" ]; then
+  if [ ! -d $1 ]; then
     echo ""
   else 
     echo $(find -L $1 -name addons.make -exec dirname {} \;)
