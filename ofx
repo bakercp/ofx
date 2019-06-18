@@ -276,6 +276,9 @@ function initialize_variables() {
     echo "                                    JOBS: ${JOBS}"
     echo "                               LOG_LEVEL: ${LOG_LEVEL}"
     echo ""
+    echo "                         EXAMPLE_PROJECTS: ${EXAMPLE_PROJECTS}"
+    echo "                            TEST_PROJECTS: ${TEST_PROJECTS}"
+    echo "                             ALL_PROJECTS: ${ALL_PROJECTS}"
     echo "================================================================================"
   fi
 
