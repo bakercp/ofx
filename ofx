@@ -45,7 +45,7 @@ function list_parameters_for_command()
       echo "install script"
       ;;
     clean)
-      echo "install script"
+      echo "all apothecary example_project_files test_project_files example_build_files test_build_files projects build"
       ;;
     install)
       echo "apothecary dependencies libraries openframeworks shared_data example_data test_data"
