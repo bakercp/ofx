@@ -79,7 +79,7 @@ FORCE=false
 function make_command_parameter_list()
 {
   for command in $(list_commands)
-  do 
+  do
     echo "  $command"
     params=$(list_parameters_for_command ${command})
     echo "    - ${params:-N/A}"
@@ -108,7 +108,7 @@ ${CON_YELLOW}commands${CON_DEFAULT}:
 ${CON_YELLOW}command parameters${CON_DEFAULT}:
 $(make_command_parameter_list)
 ${CON_YELLOW}addon${CON_DEFAULT}:
-  Addon Name - The name of an addon in the openFrameworks/addons directory. 
+  Addon Name - The name of an addon in the openFrameworks/addons directory.
     ofxAddon
   Addon Path - The relative or absolute path of an addon.
     /openFrameworks/app/project/local_addons/ofxAddon
@@ -140,7 +140,7 @@ while getopts j:p:t:o:fhv opt ; do
 done
 shift "$((OPTIND-1))"
 
-if [ $LOG_LEVEL -gt 3 ]; then 
+if [ $LOG_LEVEL -gt 3 ]; then
   set -v
 fi
 
@@ -168,22 +168,22 @@ function initialize_variables() {
     fi
   else
     OF_ROOT=${OF_ROOT:-$(cd "$( dirname "${BASH_SOURCE[0]}" )/../../" && pwd)}
-    
+
     TARGET_ADDON_PATH_ABS=$(get_abs_filename ${TARGET_ADDON_PATH})
     THIS_ADDON_NAME=${TARGET_ADDON_PATH_ABS##*/}
     THIS_USERNAME=$(whoami)
     THIS_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
-    if [ -d ${TARGET_ADDON_PATH_ABS} ]; then 
+    if [ -d ${TARGET_ADDON_PATH_ABS} ]; then
       ADDON_PARENT_DIRECTORY=$(basename "$(cd "$( dirname "${TARGET_ADDON_PATH_ABS}" )" && pwd)")
-      if [ "${ADDON_PARENT_DIRECTORY}" == "local_addons" ]; then 
+      if [ "${ADDON_PARENT_DIRECTORY}" == "local_addons" ]; then
         THIS_ADDON_PATH=${TARGET_ADDON_PATH_ABS}
         IS_LOCAL_ADDON=true
-      fi  
+      fi
     elif [[ ${TARGET_ADDON_PATH} != ofx* ]]; then
       echoError "Unable to resolve addon: ${TARGET_ADDON_PATH}"
       exit 1
-    fi 
+    fi
   fi
 
   # OF paths.
@@ -284,7 +284,7 @@ function initialize_variables() {
 
   for DIR in ${OF_ROOT} ${OF_ADDONS_PATH} ${OF_SCRIPTS_PATH}
   do
-    if [ ! -d ${DIR} ]; then 
+    if [ ! -d ${DIR} ]; then
       echoError "${DIR} does not exist. Is ofx installed in the openFrameworks/scripts/ofx directory or is the -o flag set to the openFrameworks directory?"
       exit 1
     fi
@@ -309,7 +309,7 @@ function clone_addons()
       pushd ${OF_ADDONS_PATH}/${addon} > /dev/null
 
       if ! git checkout ${ADDON_CLONE_BRANCH}; then
-        if ! git checkout master; then 
+        if ! git checkout master; then
           if ! git checkout stable; then
             echoError "Unable to check out ${ADDON_CLONE_BRANCH}, master or stable branch for https://github.com/${ADDON_CLONE_USERNAME}/${addon}.git."
             exit 1
@@ -336,7 +336,7 @@ function clone_addons()
           echoSuccess "Dependency satisfied: ${required_addon}"
         fi
       done
-    else 
+    else
       echoSuccess "Dependency satisfied ${addon} by: ${OF_ADDONS_PATH}/${addon}"
     fi
   done
@@ -713,16 +713,16 @@ function ci_install()
           scripts/ci/addons/install.sh
 
           # After this, the cloned addon will be in $THIS_ADDON_PATH, so make a link.
-          if [ ! -L ${THIS_ADDON_PATH} ]; then 
+          if [ ! -L ${THIS_ADDON_PATH} ]; then
             ln -s ${THIS_ADDON_PATH} ${TRAVIS_BUILD_DIR}
           fi
 
           popd > /dev/null
-      else 
+      else
           echoWarning "${OF_ROOT} already exists"
       fi
     fi
-  fi 
+  fi
 }
 
 
@@ -749,9 +749,9 @@ function ci()
       shift 1
       ci_install "$@"
       ;;
-    script) 
+    script)
       shift 1
-      ci_script "$@" 
+      ci_script "$@"
       ;;
     *)
       echoError "Unknown" "ci" "target: \"$1\""
@@ -789,7 +789,7 @@ function update_boilerplate()
     local SRC_FILE=${OF_ADDONS_PATH}/ofxAddon/${file}
     local DST_FILE=${THIS_ADDON_PATH}/${file}
 
-    
+
 
 
     # cp -i ${OF_ADDONS_PATH}/ofxAddon/${file} ${THIS_ADDON_PATH}/${file}
@@ -813,11 +813,11 @@ function update()
 }
 
 
-if [ $# -lt 2 ]; then 
+if [ $# -lt 2 ]; then
   echoError "A command and target addon are required arguments."
   echo -e "$HELP"
   exit 1
-fi 
+fi
 
 # Get the last argument (this should be the targeted addon)
 for arg in $@; do :; done
@@ -835,7 +835,7 @@ set -- "${@:1:$(($#-1))}"
 COMMAND="$1"
 shift 1
 
-if [ "$COMMAND" != "bootstrap" ] && [ $# == 0 ]; then 
+if [ "$COMMAND" != "bootstrap" ] && [ $# == 0 ]; then
     echoError "The \"$COMMAND\" command requires one of the following command parameter: $(list_parameters_for_command "$COMMAND")"
     exit 1
 fi
