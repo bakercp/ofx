@@ -101,13 +101,17 @@ function generate_project()
 
     if [ $LOG_LEVEL -gt 1 ]; then
       ${OF_PROJECT_GENERATOR_COMMAND} -o${OF_ROOT} ${PROJECT_PATH} -p${TARGET_PLATFORM}
-    else 
+    else
       ${OF_PROJECT_GENERATOR_COMMAND} -o${OF_ROOT} ${PROJECT_PATH} -p${TARGET_PLATFORM} > /dev/null
     fi
 
 
   elif [ "${HOST_PLATFORM}" == "${TARGET_PLATFORM}" ] ; then
-    echoWarning "Project Generator is not available, creating makefiles."
+
+    if [[ "${TARGET_PLATFORM}" != linux* ]] ; then
+      # Only mention this on platforms that aren't linux.
+      echoWarning "Project Generator is not available, creating makefiles."
+    fi
 
     PROJECT_PATH_RELATIVE_OF_ROOT=$(relpath "${OF_ROOT}" "${PROJECT_PATH}/..")
 
