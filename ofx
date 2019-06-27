@@ -403,8 +403,8 @@ function install_shared_data()
   echoInfo "Installing" "Shared Data"
 
   if [ -d ${THIS_ADDON_SHARED_DATA_PATH} ] ; then
-    SHARED_DATA_SCRIPTS=$(find -L ${THIS_ADDON_SHARED_DATA_PATH} -name *.sh)
-    for script in ${SHARED_DATA_SCRIPTS}; do
+    for script in ${THIS_ADDON_SHARED_DATA_PATH}/*.sh; do
+      echoInfo "Installing ${script}"
       /usr/bin/env bash ${script}
     done
   fi
@@ -415,72 +415,69 @@ function install_data_for_project()
 {
     local PROJECT_PATH="$1"
     local did_install=false
-    if [ -d ${PROJECT_PATH}/bin/data ] ; then
+    if [ -f ${PROJECT_PATH}/bin/data/data.txt ] ; then
+      data_file=${PROJECT_PATH}/bin/data/data.txt
 
-      DATA_FILES=$(find -L ${PROJECT_PATH}/bin/data -name data.txt)
-      for data_file in ${DATA_FILES}
+      did_install=true
+      # For the project data path.
+      THIS_PROJECT_BIN_DATA_PATH=$(dirname "${data_file}")
+
+      # The || [ -n "$line" ]; is to help when the last line isn't a new line char.
+      while read line || [ -n "$line" ];
       do
-        did_install=true
-        # For the project data path.
-        THIS_PROJECT_BIN_DATA_PATH=$(dirname "${data_file}")
+        # Make sure the data doesn't start with a comment hash #
+        # Make sure that it isn't am empty line.
+        if [ "${line:0:1}" != "#"  ] && [ -n "${line// }" ]; then
+          IFS=' ' read -r -a tokens <<< "${line}" # Parse the tokens.
+          SRC=${tokens[0]} # Get the source location.
+          DST=${tokens[1]:-""} # Get the destination location, or nothing if missing.
 
-        # The || [ -n "$line" ]; is to help when the last line isn't a new line char.
-        while read line || [ -n "$line" ];
-        do
-          # Make sure the data doesn't start with a comment hash #
-          # Make sure that it isn't am empty line.
-          if [ "${line:0:1}" != "#"  ] && [ -n "${line// }" ]; then
-            IFS=' ' read -r -a tokens <<< "${line}" # Parse the tokens.
-            SRC=${tokens[0]} # Get the source location.
-            DST=${tokens[1]:-""} # Get the destination location, or nothing if missing.
-
-            if ! [[ ${SRC} == http* ]]; then
-              if [[ ${SRC} == /* ]]; then
-                SRC_PATH=${SRC}
-              else
-                SRC_PATH=${THIS_ADDON_SHARED_DATA_PATH}/${SRC}
-              fi
-
-              if [[ -z ${DST} ]]; then
-                if [[ ${SRC} == /* ]]; then
-                  DST_PATH=${THIS_PROJECT_BIN_DATA_PATH}/$(basename "${SRC}")
-                else
-                  DST_PATH=${THIS_PROJECT_BIN_DATA_PATH}/${SRC}
-                fi
-              else
-                DST_PATH=${THIS_PROJECT_BIN_DATA_PATH}/${DST}
-              fi
-
-              if ! [ -e ${DST_PATH} ]; then
-                if ! [ -e ${SRC_PATH} ]; then
-                  echoError "${SRC_PATH} does not exist. Did you install the shared data?"
-                  continue
-                fi
-
-                mkdir -p "$(dirname "${DST_PATH}")"
-                rsync -Pvqar ${SRC_PATH} ${DST_PATH}
-              fi
-
-              echoSuccess "Copied" "${SRC} 👉 ${DST_PATH}"
+          if ! [[ ${SRC} == http* ]]; then
+            if [[ ${SRC} == /* ]]; then
+              SRC_PATH=${SRC}
             else
-              if [[ -z ${DST} ]]; then
-                DST=$(basename ${SRC})
-              fi
-              DST_PATH=${THIS_PROJECT_BIN_DATA_PATH}/${DST}
-              if ! [ -e ${DST_PATH} ]; then
-                curl --progress-bar --create-dirs -o ${DST_PATH} -L ${SRC}
-              fi
-              echoSuccess "Downloaded" "${SRC} 👉 ${DST_PATH}"
+              SRC_PATH=${THIS_ADDON_SHARED_DATA_PATH}/${SRC}
             fi
+
+            if [[ -z ${DST} ]]; then
+              if [[ ${SRC} == /* ]]; then
+                DST_PATH=${THIS_PROJECT_BIN_DATA_PATH}/$(basename "${SRC}")
+              else
+                DST_PATH=${THIS_PROJECT_BIN_DATA_PATH}/${SRC}
+              fi
+            else
+              DST_PATH=${THIS_PROJECT_BIN_DATA_PATH}/${DST}
+            fi
+
+            if ! [ -e ${DST_PATH} ]; then
+              if ! [ -e ${SRC_PATH} ]; then
+                echoError "${SRC_PATH} does not exist. Did you install the shared data?"
+                continue
+              fi
+
+              mkdir -p "$(dirname "${DST_PATH}")"
+              rsync -Pvqar ${SRC_PATH} ${DST_PATH}
+            fi
+
+            echoSuccess "Copied" "${SRC} 👉 ${DST_PATH}"
+          else
+            if [[ -z ${DST} ]]; then
+              DST=$(basename ${SRC})
+            fi
+            DST_PATH=${THIS_PROJECT_BIN_DATA_PATH}/${DST}
+            if ! [ -e ${DST_PATH} ]; then
+              curl --progress-bar --create-dirs -o ${DST_PATH} -L ${SRC}
+            fi
+            echoSuccess "Downloaded" "${SRC} 👉 ${DST_PATH}"
           fi
-        done < ${data_file}
-      done
+        fi
+      done < ${data_file}
     fi
 
     if [ ${did_install} == "true" ]; then
-      echoSuccess "Installed" "data for" "${PROJECT_PATH#"${THIS_ADDON_PATH}/"}"
+      echoInfo "Installed data for" "${PROJECT_PATH#"${THIS_ADDON_PATH}/"}"
     else
-      echoInfo "No Data Installed" "for" "${PROJECT_PATH#"${THIS_ADDON_PATH}/"}"
+      echoInfo "Nothing installed for" "${PROJECT_PATH#"${THIS_ADDON_PATH}/"}"
     fi
 }
 
