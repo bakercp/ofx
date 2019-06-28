@@ -329,10 +329,10 @@ function clean_project_build_files()
 # \returns 0 exit code on success.
 function find_projects()
 {
-  if [ ! -d $1 ]; then
-    echo ""
-  else
+  if [ -d $1 ]; then
     echo $(find -L $1 -name addons.make -exec dirname {} \;)
+  else
+    echo ""
   fi
 
   return 0
