@@ -65,7 +65,7 @@ echoIconColorMessage() {
   if [ $# -lt 3 ]; then
     echo -e "Three parameters required: icon, color, message".
     exit 1
-  fi 
+  fi
 
   local icon=${1}
   local color=${2}
@@ -79,36 +79,36 @@ echoIconColorMessage() {
 
   local message=""
   if [ $# -gt 2 ]; then message="$_CON_BOLD_UNDERLINE$(uppercase ${1})$CON_DEFAULT "; shift 1; fi
-  
+
   if [ $# -gt 1 ]; then message="${message}$_CON_BOLD$1$CON_DEFAULT "; shift 1; fi
-  
-  message="${message}$_CON_NONE$@$CON_DEFAULT"; 
-    
-  echo -e "${icon}  ${message}"; 
+
+  message="${message}$_CON_NONE$@$CON_DEFAULT";
+
+  echo -e "${icon}  ${message}";
 
 }
 
 # Console printing functions (with color).
-echoError() { 
+echoError() {
   (echoIconColorMessage "❌" "${ANSI_COLOR_RED}" "$@");
 }
 
-echoWarning() { 
+echoWarning() {
   (echoIconColorMessage "⚠️" "${ANSI_COLOR_YELLOW}" "$@");
 }
 
-echoInfo() { 
+echoInfo() {
   (echoIconColorMessage "ℹ️" "${ANSI_COLOR_DEFAULT}" "$@");
 }
 
-echoSuccess() { 
+echoSuccess() {
   (echoIconColorMessage "✅️" "${ANSI_COLOR_GREEN}" "$@");
 }
 
 echoVerbose() {
-  if [ $LOG_LEVEL -gt $LOG_VERBOSE_NONE ] ; then 
+  if [ $LOG_LEVEL -gt $LOG_VERBOSE_NONE ] ; then
     (echoIconColorMessage "📢️" "${ANSI_COLOR_PURPLE}" "$@");
-  fi 
+  fi
 }
 
 
@@ -175,18 +175,19 @@ function relpath()
 function get_max_number_of_jobs()
 {
   local host_os=$(os)
-  
+
   local n_processors=1
 
   if [ "${host_os}" == "osx" ]; then
     n_processors=$(sysctl -n hw.ncpu)
-  else 
+  else
     n_processors=$(nproc)
   fi
 
-  if [ "${host_os}" == "linuxarmv6l" ] || [ "${host_os}" == "linuxarmv7l" ]; then 
-    n_processors = $((n_processors-1))
-  fi 
+  # Remove one processor for low RAM devices.
+  if [[ "${host_os}" == linuxarm* ]]; then
+    ((n_processors-=1))
+  fi
 
   echo ${n_processors}
 }
@@ -220,7 +221,7 @@ function remove_os_files
         -name ".DS_Store" \
     -o -name ".AppleDouble" \
   \) \
-  -exec rm -rf {} \;  
+  -exec rm -rf {} \;
 }
 
 function remove_empty_data_folders
@@ -231,7 +232,7 @@ function remove_empty_data_folders
   \( \
         -name "data" \
   \) \
-  -exec rm -rf {} \;  
+  -exec rm -rf {} \;
 }
 
 
@@ -243,7 +244,7 @@ function remove_empty_bin_folders
   \( \
         -name "bin" \
   \) \
-  -exec rm -rf {} \;  
+  -exec rm -rf {} \;
 }
 
 
@@ -330,7 +331,7 @@ function find_projects()
 {
   if [ ! -d $1 ]; then
     echo ""
-  else 
+  else
     echo $(find -L $1 -name addons.make -exec dirname {} \;)
   fi
 
@@ -388,6 +389,7 @@ function get_addon_dependencies_for_project()
 
 function build_project()
 {
+  echoInfo "🔨 Building" "$1"
   pushd $1 > /dev/null
   # make -j${JOBS} -s
   make -j${JOBS} -s DebugNoOF
@@ -397,6 +399,7 @@ function build_project()
 
 function run_project()
 {
+  echoInfo "🏃‍ Running" "$1"
   pushd $1 > /dev/null
   make -j${JOBS} -s run
   popd > /dev/null
