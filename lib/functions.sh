@@ -391,8 +391,8 @@ function build_project()
 {
   echoInfo "🔨 Building" "$1"
   pushd $1 > /dev/null
-  # make -j${JOBS} -s
-  make -j${JOBS} -s DebugNoOF
+  make -j${JOBS} -s
+  #make -j${JOBS} -s DebugNoOF
   popd > /dev/null
 }
 
