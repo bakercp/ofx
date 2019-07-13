@@ -625,7 +625,16 @@ function build_documentation()
 {
   if [ -f ${THIS_ADDON_DOCUMENTATION_PATH}/Doxyfile ]; then
     pushd ${THIS_ADDON_DOCUMENTATION_PATH} > /dev/null
-    doxygen Doxyfile
+
+    # Download the tagfile for online cpp reference.
+    curl --progress-bar -LO https://upload.cppreference.com/mwiki/images/f/f8/cppreference-doxygen-web.tag.xml
+
+    cp Doxyfile Doxyfile_
+
+    # Add links to online cpp documentation.
+    echo "TAGFILES += \"cppreference-doxygen-web.tag.xml=http://en.cppreference.com/w/\"" >> Doxyfile_
+
+    doxygen Doxyfile_
     touch html/.nojekyll
     popd > /dev/null
   fi
