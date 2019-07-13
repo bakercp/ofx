@@ -456,10 +456,17 @@ function install_data_for_project()
               fi
 
               mkdir -p "$(dirname "${DST_PATH}")"
-              rsync -Pvqar ${SRC_PATH} ${DST_PATH}
+              pushd "$(dirname "${DST_PATH}")" > /dev/null
+
+              REL_SRC_PATH=$(relpath ${SRC_PATH} .)
+              REL_DST_PATH=$(relpath ${DST_PATH} .)
+
+              #rsync -Pvqar ${SRC_PATH} ${DST_PATH}
+              ln -s ${REL_SRC_PATH} ${REL_DST_PATH}
+              popd > /dev/null
             fi
 
-            echoSuccess "Copied" "${SRC} 👉 ${DST_PATH}"
+            echoSuccess "Linked" "${SRC} 👉 ${DST_PATH}"
           else
             if [[ -z ${DST} ]]; then
               DST=$(basename ${SRC})
@@ -618,7 +625,16 @@ function build_documentation()
 {
   if [ -f ${THIS_ADDON_DOCUMENTATION_PATH}/Doxyfile ]; then
     pushd ${THIS_ADDON_DOCUMENTATION_PATH} > /dev/null
-    doxygen Doxyfile
+
+    # Download the tagfile for online cpp reference.
+    curl --progress-bar -LO https://upload.cppreference.com/mwiki/images/f/f8/cppreference-doxygen-web.tag.xml
+
+    cp Doxyfile Doxyfile_
+
+    # Add links to online cpp documentation.
+    echo "TAGFILES += \"cppreference-doxygen-web.tag.xml=http://en.cppreference.com/w/\"" >> Doxyfile_
+
+    doxygen Doxyfile_
     touch html/.nojekyll
     popd > /dev/null
   fi
