@@ -292,9 +292,15 @@ function clean_project_files()
 function clean_project_build_files()
 {
   # QTCreatorBuild paths
-  find -L $1 -maxdepth 1 \( \
+  # find -L $1 -maxdepth 1 \( \
+  #     -type d -a \
+  #     -name "build-*" \
+  #   \)  -exec rm -rf {} \;
+
+  # Get the build files in the parent directory.
+  find -L $1/.. -maxdepth 2 \( \
       -type d -a \
-      -name "build-example*" \
+      -name "build-*" \
     \)  -exec rm -rf {} \;
 
   find -L $1 -maxdepth 1 \( \
