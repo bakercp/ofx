@@ -391,7 +391,15 @@ function build_project()
 {
   echoInfo "🔨 Building" "$1"
   pushd $1 > /dev/null
-  make -j${JOBS} -s
+
+  # TODO pass additional arguments to make.
+
+  if [ $LOG_LEVEL -gt $LOG_VERBOSE_NONE ] ; then
+    make -j${JOBS}
+  else 
+    make -j${JOBS} -s 
+  fi
+
   #make -j${JOBS} -s DebugNoOF
   popd > /dev/null
 }
@@ -401,6 +409,14 @@ function run_project()
 {
   echoInfo "🏃‍ Running" "$1"
   pushd $1 > /dev/null
-  make -j${JOBS} -s run
+
+  # TODO pass additional arguments to make.
+
+  if [ $LOG_LEVEL -gt $LOG_VERBOSE_NONE ] ; then
+    make -j${JOBS} run
+  else 
+    make -j${JOBS} run -s 
+  fi
+
   popd > /dev/null
 }
