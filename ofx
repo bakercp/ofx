@@ -320,11 +320,14 @@ function clone_addons()
       popd > /dev/null
 
       # Bootstrap addon if needed.
-      pushd ${OF_ADDONS_PATH}/${addon} > /dev/null
-      if [ -f scripts/boostrap.sh ]; then
+      if [ -f ${OF_ADDONS_PATH}/${addon}/scripts/boostrap.sh ]; then
+        pushd ${OF_ADDONS_PATH}/${addon} > /dev/null
         /usr/bin/env bash scripts/boostrap.sh
+        popd > /dev/null
+      else
+        # TODO, more complete bootstrap.
+        install_libraries "${addon}" "${OF_ADDONS_PATH}/${addon}"
       fi
-      popd > /dev/null
 
       local _REQUIRED_ADDONS=$(get_addon_dependencies_for_addon ${OF_ADDONS_PATH}/${addon})
 
