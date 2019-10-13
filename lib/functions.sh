@@ -27,9 +27,9 @@ function uppercase()
 
 # Logging
 LOG_VERBOSE_NONE=0
-LOG_VERBOSE_LOW=1
-LOG_VERBOSE_MEDIUM=2
-LOG_VERBOSE_HIGH=3
+#LOG_VERBOSE_LOW=1
+#LOG_VERBOSE_MEDIUM=2
+#LOG_VERBOSE_HIGH=3
 
 # Verbose level.
 LOG_LEVEL=$LOG_VERBOSE_NONE
@@ -338,11 +338,11 @@ function find_projects()
   if [ ! -d $1 ]; then
     echo ""
   elif [ "${TARGET_PLATFORM}" == "ios" ] ; then
-    echo $(find -L $1 -name addons.make -path "*/ios/*" -exec dirname {} \;)
+    echo $(find -L $1 -name addons.make -path "*/ios/*" -o -path "*/*-ios/*" -exec dirname {} \;)
   elif [ "${TARGET_PLATFORM}" == "android" ] ; then
-    echo $(find -L $1 -name addons.make -path "*/android/*" -exec dirname {} \;)
+    echo $(find -L $1 -name addons.make -path "*/android/*" -o -path "*/*-android/*"-exec dirname {} \;)
   else 
-    echo $(find -L $1 -name addons.make -not -path "*/ios/*" -not -path "*/android/*" -exec dirname {} \;)
+    echo $(find -L $1 -name addons.make -not -path "*/ios/*" -not -path "*/*-ios/" -not -path "*/android/*" -not -path "*/*-android/*" -exec dirname {} \;)
   fi
 
   return 0
