@@ -304,11 +304,15 @@ function clone_addons()
     if [ ! -d ${OF_ADDONS_PATH}/${addon} ]; then
       echoInfo "Installing" "addon" "${OF_ADDONS_PATH}/${addon}"
 
+      git clone --quiet --no-single-branch --depth=${ADDON_CLONE_DEPTH} https://github.com/${ADDON_CLONE_USERNAME}/${addon}.git ${OF_ADDONS_PATH}/${addon}
 
       pushd ${OF_ADDONS_PATH}/${addon} > /dev/null
 
+      # Try to get the specified branch ...
       if ! git checkout ${ADDON_CLONE_BRANCH}; then
+        # Try to get the master branch ...
         if ! git checkout master; then
+          # Try to get the stable branch ...
           if ! git checkout stable; then
             echoError "Unable to check out ${ADDON_CLONE_BRANCH}, master or stable branch for https://github.com/${ADDON_CLONE_USERNAME}/${addon}.git."
             exit 1
@@ -344,6 +348,7 @@ function clone_addons()
   done
   return 0
 }
+
 
 
 # Extract ADDON_DEPENDENCIES from an addon's addon_config.mk file.
@@ -554,7 +559,7 @@ function install()
   case "$1" in
     apothecary) shift 1; install_apothecary "$@" ;;
     dependencies) shift 1; install_dependencies "$@" ;;
-    libraries) shift 1; install_libraries "$@" ;;
+    libraries) shift 1; install_libraries "${THIS_ADDON_NAME}" "${THIS_ADDON_PATH}" "$@" ;;
     openframeworks) shift 1; install_openframeworks "$@" ;;
     shared_data) shift 1; install_shared_data "$@" ;;
     example_data) shift 1; install_example_data "$@" ;;
@@ -704,7 +709,7 @@ function bootstrap()
   echo -e "\tdevice.\"\n"
 
   install_apothecary
-  install_libraries
+  install_libraries "${THIS_ADDON_NAME}" "${THIS_ADDON_PATH}"
   install_dependencies
   install_shared_data
   install_example_data
