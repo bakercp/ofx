@@ -304,7 +304,6 @@ function clone_addons()
     if [ ! -d ${OF_ADDONS_PATH}/${addon} ]; then
       echoInfo "Installing" "addon" "${OF_ADDONS_PATH}/${addon}"
 
-      git clone --quiet --depth=${ADDON_CLONE_DEPTH} https://github.com/${ADDON_CLONE_USERNAME}/${addon}.git ${OF_ADDONS_PATH}/${addon}
 
       pushd ${OF_ADDONS_PATH}/${addon} > /dev/null
 
