@@ -342,7 +342,7 @@ function find_projects()
   elif [ "${TARGET_PLATFORM}" == "android" ] ; then
     echo $(find -L $1 -name addons.make -path "*/android/*" -o -path "*/*-android/*"-exec dirname {} \;)
   else 
-    echo $(find -L $1 -name addons.make -not -path "*/ios/*" -not -path "*/*-ios/" -not -path "*/android/*" -not -path "*/*-android/*" -exec dirname {} \;)
+    echo $(find -L $1 -name addons.make -not -path "*/ios/*" -not -path "*/*-ios/*" -not -path "*/android/*" -not -path "*/*-android/*" -exec dirname {} \;)
   fi
 
   return 0
